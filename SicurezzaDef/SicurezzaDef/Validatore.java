@@ -3,7 +3,6 @@ import java.net.Socket;
 
 import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLServerSocketFactory;
-import javax.net.ssl.SSLSocket;
 import java.util.concurrent.TimeUnit;
 
 import java.security.PublicKey;
@@ -15,11 +14,6 @@ import java.security.KeyStore;
 import java.util.Arrays;
 
 import java.security.spec.PKCS8EncodedKeySpec;
-
-import org.bouncycastle.util.encoders.Hex;
-import org.bouncycastle.jce.ECNamedCurveTable;
-import org.bouncycastle.jce.spec.ECParameterSpec;
-import org.bouncycastle.jce.spec.ECPublicKeySpec;
 
 /**
  *
@@ -175,11 +169,16 @@ public class Validatore {
     }
 
     /**
-     * 
-     * @param cSock socket con cui comunicare
-     * @param truststore truststore per ottenere la PK
-     * @param clientPK 
-     * @param IDclient
+     * la seguente funzione definisce le operazioni svolte nella finestra temporale T1-T2 per le transazioni, 
+     * in particolare prelevano il messagio inviatogli dal client, ne controllano la firma (ClientComunication) 
+     * contrallano che questo è in possesso dell'NFT (checkNFT) e in caso affermativo procede con la scrittura del
+     *  messaggio firmato sulla chain (ProtocolWriteOnChain) infine ritorna "true" se tutte le operazioni sono andate a buon fine 
+     * inviando al client la conferma dell'avvenuta transazione.
+     * @param sSock
+     * @param cSock socket su cui comunicare
+     * @param truststore truststore Validatore
+     * @param clientPK public Key del client
+     * @param IDclient ID del client
      * @return
      * @throws Exception
      */
@@ -195,7 +194,21 @@ public class Validatore {
         return correctnessFirst;
     }
 
-    static boolean ClientConirmT2T3(SSLServerSocket sSock, Socket cSock, KeyStore truststore, PublicKey clientPK, int IDclient) throws Exception{
+    /**
+     * la seguente funzione definisce le operazioni svolte nella finestra temporale T2-T3 per le transazioni, 
+     * in particolare prelevano la randomness inviatagli dal client, ne controllano la firma (ClientComunication) 
+     * contrallano che questo è in possesso dell'NFT (checkNFT) e in caso affermativo procede con la scrittura della
+     *  randomness firmata sulla chain (ProtocolWriteOnChain) infine ritorna "true" se tutte le operazioni sono andate a buon fine 
+     * inviando al client la conferma dell'avvenuta transazione.
+     * @param sSock
+     * @param cSock socket su cui comunicare
+     * @param truststore truststore Validatore
+     * @param clientPK public Key del client
+     * @param IDclient ID del client
+     * @return
+     * @throws Exception
+     */
+    static boolean ClientConfirmT2T3(SSLServerSocket sSock, Socket cSock, KeyStore truststore, PublicKey clientPK, int IDclient) throws Exception{
         byte[] secondTransaction = ClientComunication(cSock, clientPK, 32);
         Boolean correctnessSecond = false;
         if (SmartContract.checkNFT(truststore, IDclient + 1, clientPK))
@@ -203,6 +216,18 @@ public class Validatore {
         return correctnessSecond;
     }
 
+    /**
+     * la seguente funzione definisce le operazioni svolte nella finestra temporale T3-T4 per le transazioni, 
+     * in particolare prelevano la private key inviatagli dalla società, ne controllano la firma (SocietyFinalComunication) 
+     * procede a eseguire la funzione dell smart conrtact adibita al calcolo dell'esito del referendum.
+     * Infine ritorna "true" se tutte le operazioni sono andate a buon fine inviando alla Società la conferma dell'avvenuta transazione.
+     * @param sSock
+     * @param cSock socket su cui comunicare
+     * @param truststore truststore Validatore
+     * @param SocietyPK public Key del client
+     * @return
+     * @throws Exception
+     */
     static boolean SocietaFinalCommunication(SSLServerSocket sSock, Socket cSock, KeyStore truststore, PublicKey SocietyPK) throws Exception{
         PrivateKey SocPrivateKey = SocietyFinalComunication(cSock, SocietyPK, 67);
         ConfirmTransaction(cSock, "0");
@@ -289,7 +314,7 @@ public class Validatore {
             sslSock[i] = (SSLSocket) sSock.accept(); // accept connections
             System.out.println("\nconnection" + i);
             // simula la votazione nella fase T2-T3 con annessa scrittura on chain
-            Boolean correctnessSecond = ClientConirmT2T3(sSock, sslSock[i], truststore, clientPK[i], i);
+            Boolean correctnessSecond = ClientConfirmT2T3(sSock, sslSock[i], truststore, clientPK[i], i);
             //codice relativo alla conferma della transazione
             System.out.println("invio la conferma dell'avvenuta seconda transazione");
             if (correctnessSecond) {
