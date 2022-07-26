@@ -124,10 +124,7 @@ public class Votante {
             cSock2.startHandshake(); //Handshake
             //la randomness ottenuta viene firmata
             byte[] signature = Cryptare.signature(ClientPrivatekey, r); 
-            ByteArrayOutputStream outputStream2 = new ByteArrayOutputStream();
-            outputStream2.write(r);
-            outputStream2.write(signature);
-            byte[] result = outputStream2.toByteArray();
+            byte[] result = Utils.concatBytes(r, signature);
             Protocol(cSock2, result); //la randomness ottenuta e firmata viene inviata al validatore 
             //simula la fine della finestra temporale T2-T3
             TimeUnit.MILLISECONDS.sleep(25000);
@@ -137,4 +134,9 @@ public class Votante {
         }
 
     }
+
+   
+
+
+
 }
