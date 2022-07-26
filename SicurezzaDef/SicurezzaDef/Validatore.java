@@ -19,15 +19,24 @@ import org.bouncycastle.jce.ECNamedCurveTable;
 import org.bouncycastle.jce.spec.ECParameterSpec;
 import org.bouncycastle.jce.spec.ECPublicKeySpec;
 
+/**
+ *
+ * @author Kryptos
+ */
+
 public class Validatore {
     public static String s = "Server";
 
     /*
-     * ProtocolWriteOnChain è una funzione che permette di scrivere sulla ItalyChain (identificata come un file di testo)
+     * ProtocolWriteOnChain è una funzione che permette di scrivere sulla ItalyChain
+     * (identificata come un file di testo)
      * si distinguono due caso:
-     *  il caso in cui il file non è mai stato creato, prima viene creato (con l'header) e dopo si scrive la transazione.
-     *  il caso in cui il file esiste già, viene aperto in modalità append sfruttando una classe da noi creata (evita di scrivere l'header) e scrive la transazione.
-     *  
+     * il caso in cui il file non è mai stato creato, prima viene creato (con
+     * l'header) e dopo si scrive la transazione.
+     * il caso in cui il file esiste già, viene aperto in modalità append sfruttando
+     * una classe da noi creata (evita di scrivere l'header) e scrive la
+     * transazione.
+     * 
      */
     static Boolean ProtocolWriteOnChain(byte[] transaction, PublicKey VoterPK) throws Exception {
         File file1 = new File("ItalyChain.txt");

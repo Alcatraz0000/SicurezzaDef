@@ -12,6 +12,11 @@ import java.util.concurrent.TimeUnit;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 
+/**
+ *
+ * @author Kryptos
+ */
+
 public class Societa {
     /*
      * La classe Societa ha lo scopo di replicare in codice le azioni che dovrebbe
@@ -71,10 +76,9 @@ public class Societa {
 
             System.out.println("\nPrivate Key calcolata mandata: " + SocietaPrivateKey);
             byte[] signature = Cryptare.signature(SocietaPrivateKey, SocietaPrivateKey.getEncoded());
-            ByteArrayOutputStream outputStream2 = new ByteArrayOutputStream();
-            outputStream2.write(SocietaPrivateKey.getEncoded());
-            outputStream2.write(signature);
-            byte[] result = outputStream2.toByteArray();
+
+            byte[] result = Utils.concatBytes(SocietaPrivateKey.getEncoded(), signature);
+
             out.write(result);
 
             out.write(Utils.toByteArray("\n"));
