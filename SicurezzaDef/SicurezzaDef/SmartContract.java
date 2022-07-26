@@ -63,7 +63,7 @@ public class SmartContract {
         if (si + no + nullo < quorum) {
             System.out.println("Il Referendum non ha raggiunto il quorum quindi è annullato");
         } else if (si == no) {
-            System.out.println("Il risultato è paritario per tanto il Referendum è annullato");
+            System.out.println("Il risultato è paritario pertanto il Referendum è annullato");
         } else if (si > no) {
             System.out.println("Il Referendum è vinto dal si");
         } else {
