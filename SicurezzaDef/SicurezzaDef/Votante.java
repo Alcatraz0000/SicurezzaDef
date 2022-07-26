@@ -71,41 +71,25 @@ public class Votante {
         PublicKey ClientPublickey = null;
         //ottenere chiave pubblica e privata associata al client a partire dal proprio keystore
         try {
-            File file = new File("Client" + args[0] + "keystore.jks"); //args[0] contiene l'ID del votante
-            FileInputStream is = new FileInputStream(file);
-            KeyStore keystore = KeyStore.getInstance(KeyStore.getDefaultType());
-            // Informazioni per il certificato
+            String nomeFile = "Client" + args[0] + "keystore.jks"; //args[0] contiene l'ID del votante
             String password = "mario99";
             String alias = "sslClient" + args[0];
             // ottenimento delle chiavi
-            keystore.load(is, password.toCharArray());
-            ClientPrivatekey = (PrivateKey) keystore.getKey(alias, password.toCharArray()); //chiave privata
-            // Certificato della public key
-            X509Certificate cert = (X509Certificate) keystore.getCertificate(alias);
-            ClientPublickey = cert.getPublicKey(); //chiave pubblica
-
-            // Here it prints the public key
-            //System.out.println("Public Key Client" + args[0] + ": ");
-            //System.out.println(ClientPublickey);
-            // Here it prints the private key
+            ClientPublickey = Utils.obtainPublicFromKeystore(nomeFile, password, alias);
+            ClientPrivatekey = Utils.obtainPrivateFromKeystore(nomeFile, password, alias);
 
         } catch (Exception e) {
             System.out.println(e);
         }
 
-        KeyStore truststore = null;
+        //KeyStore truststore = null;
         PublicKey SocietyPublicKey = null;
         //ottenere dal truststore del votante la chiave pubblica della società, utile per le cifrature successive
         try {
-            File file = new File("truststoreClient" + args[0] + ".jks");
-            FileInputStream is = new FileInputStream(file);
-            truststore = KeyStore.getInstance(KeyStore.getDefaultType());
-            String password = "mario99";
-            truststore.load(is, password.toCharArray());
-            String alias = "sslSociety";
-            // certificato della chiave pubblica
-            X509Certificate cert = (X509Certificate) truststore.getCertificate(alias);
-            SocietyPublicKey = cert.getPublicKey(); //chiave pubblica della società
+            String nomeFile1 = "truststoreClient" + args[0] + ".jks";
+            String password1 = "mario99";
+            String alias1 = "sslSociety";
+            SocietyPublicKey = Utils.obtainValuesFromTruststore(nomeFile1, password1, alias1);
 
         } catch (Exception e) {
             System.out.println(e);
