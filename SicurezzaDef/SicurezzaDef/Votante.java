@@ -24,7 +24,7 @@ import java.util.Arrays;
  * al voto espresso da quest'ultimo relativamente al referendum in questione.
  */
 
-public class SSLClient {
+public class Votante {
 
     /**
      * Tale funzione è deputata all'invio dei messaggi, sfruttando la socket instanziata, facendo sì
