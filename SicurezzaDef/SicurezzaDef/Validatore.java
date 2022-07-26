@@ -16,11 +16,6 @@ import java.util.Arrays;
 
 import java.security.spec.PKCS8EncodedKeySpec;
 
-import org.bouncycastle.util.encoders.Hex;
-import org.bouncycastle.jce.ECNamedCurveTable;
-import org.bouncycastle.jce.spec.ECParameterSpec;
-import org.bouncycastle.jce.spec.ECPublicKeySpec;
-
 /**
  *
  * @author Kryptos
@@ -30,10 +25,15 @@ public class Validatore {
     public static String s = "Server";
 
     /**
-     * ProtocolWriteOnChain è una funzione che permette di scrivere sulla ItalyChain (identificata come un file di testo)
+     * ProtocolWriteOnChain è una funzione che permette di scrivere sulla ItalyChain
+     * (identificata come un file di testo)
      * si distinguono due casi:
-     *  -il caso in cui il file non è mai stato creato, prima viene creato (con l'header) e dopo si scrive la transazione.
-     *  -il caso in cui il file esiste già, viene aperto in modalità append sfruttando una classe da noi creata (evita di scrivere l'header) e scrive la transazione.
+     * -il caso in cui il file non è mai stato creato, prima viene creato (con
+     * l'header) e dopo si scrive la transazione.
+     * -il caso in cui il file esiste già, viene aperto in modalità append
+     * sfruttando una classe da noi creata (evita di scrivere l'header) e scrive la
+     * transazione.
+     * 
      * @param transaction
      * @param VoterPK
      * @return
@@ -70,8 +70,11 @@ public class Validatore {
     }
 
     /**
-     * in questo protocollo il Votante manda un array di bytes di una dimensione fissata come parametro firmato al Validatore.
-     * Questo controlla che la firma sia coretta e lo ritorna al chiamante al quale poi sono delegati comportamenti successivi
+     * in questo protocollo il Votante manda un array di bytes di una dimensione
+     * fissata come parametro firmato al Validatore.
+     * Questo controlla che la firma sia coretta e lo ritorna al chiamante al quale
+     * poi sono delegati comportamenti successivi
+     * 
      * @param sSock
      * @param VoterPK
      * @return
@@ -87,15 +90,18 @@ public class Validatore {
         int tmp = 0;
         int i = 0;
         TimeUnit.MILLISECONDS.sleep(1000);
-        //con il seguente for si apprendono tutti i byte del messaggio nell'apposito array
+        // con il seguente for si apprendono tutti i byte del messaggio nell'apposito
+        // array
         for (i = 0; i < messageDimension; i++) {
             tmp = in.read();
             message[i] = (byte) tmp;
         }
-        //si definisce la lunghezza dei byte del vettore firma in base ai byte che ancora devono essere letti
+        // si definisce la lunghezza dei byte del vettore firma in base ai byte che
+        // ancora devono essere letti
         int signatureLength = in.available();
         byte[] signature = new byte[signatureLength];
-        //con il seguente for si apprendono tutti i byte della firma nell'apposito array
+        // con il seguente for si apprendono tutti i byte della firma nell'apposito
+        // array
         for (i = 0; i < signatureLength; i++) {
             tmp = in.read();
             signature[i] = (byte) tmp;
@@ -103,38 +109,47 @@ public class Validatore {
         TimeUnit.MILLISECONDS.sleep(50);
         // viene controllata l'autentiucità del messaggio
         Boolean verify = Cryptare.verifySignature(VoterPK, signature, message);
-        //in caso in cui la firma non è corretta verrà stampato un messaggio e tornato null
+        // in caso in cui la firma non è corretta verrà stampato un messaggio e tornato
+        // null
         if (verify != true) {
             System.out.println("\nMessaggio non firmato correttamente: ");
             return null;
         }
-        
+
         System.out.println("session closed.");
         return Utils.concatBytes(message, signature);
     }
 
     /**
-     * la seguente funzione definisce il protocollo con cui la società invia la propria secret key al validatore utililizzata poi 
-     * per invocare la funzione dello smart contract adibita a calcolare l'esito finale del referndum
-     * @param sSock socket per la comunicazione
-     * @param SocietyPK publicKey della società
+     * la seguente funzione definisce il protocollo con cui la società invia la
+     * propria secret key al validatore utililizzata poi
+     * per invocare la funzione dello smart contract adibita a calcolare l'esito
+     * finale del referndum
+     * 
+     * @param sSock            socket per la comunicazione
+     * @param SocietyPK        publicKey della società
      * @param messageDimension dimensione del messaggio che il validatore riceve
      * @return
      * @throws Exception
      */
-    static PrivateKey SocietyFinalComunication(Socket sSock, PublicKey SocietyPK, int messageDimension) throws Exception {
+    static PrivateKey SocietyFinalComunication(Socket sSock, PublicKey SocietyPK, int messageDimension)
+            throws Exception {
 
         byte[] message = ClientComunication(sSock, SocietyPK, messageDimension);
-        // Alla classica client comunication si aggiunge la rigenerazione della chiave della società partendo dai bytes ricevuti da quest'ultima
+        // Alla classica client comunication si aggiunge la rigenerazione della chiave
+        // della società partendo dai bytes ricevuti da quest'ultima
         KeyFactory kf = KeyFactory.getInstance("EC", "BC"); // or "EC" or whatever
-        PrivateKey privateKey = kf.generatePrivate(new PKCS8EncodedKeySpec(Arrays.copyOfRange(message, 0, messageDimension)));
+        PrivateKey privateKey = kf
+                .generatePrivate(new PKCS8EncodedKeySpec(Arrays.copyOfRange(message, 0, messageDimension)));
         System.out.println("\nPrivate Key calcolata arrivata: " + privateKey);
         return privateKey;
     }
 
     /**
-     * la seguente funzione permette di ottenere la public key dell'i-esimo client partire dal certificato dello stesso contenuto nel trustore del
-     *  Validatore (è solo operativa senza grossi significati)
+     * la seguente funzione permette di ottenere la public key dell'i-esimo client
+     * partire dal certificato dello stesso contenuto nel trustore del
+     * Validatore (è solo operativa senza grossi significati)
+     * 
      * @param truststore
      * @param IDClient
      * @return
@@ -148,8 +163,10 @@ public class Validatore {
     }
 
     /**
-     * la seguente funzione permette di ottenere la public key della società partire dal certificato della stessa contenuto nel trustore del
+     * la seguente funzione permette di ottenere la public key della società partire
+     * dal certificato della stessa contenuto nel trustore del
      * Validatore (è solo operativa senza grossi significati)
+     * 
      * @param truststore
      * @return
      * @throws Exception
@@ -161,29 +178,42 @@ public class Validatore {
     }
 
     /**
-     * la seguente funzione permette di inviare la conferma del completamento delle operazioni sulla transazione
+     * la seguente funzione permette di inviare la conferma del completamento delle
+     * operazioni sulla transazione
+     * 
      * @param cSock Socket su cui inviare il byte di ack
      * @param esito esito dell'invio (positivo o negativo)
      * @throws Exception
      */
     static void ConfirmTransaction(Socket cSock, String esito) throws Exception {
-        //imposta la socket in output
+        // imposta la socket in output
         OutputStream out = cSock.getOutputStream();
-        //invia un byte di conferma del completamento della transazione
+        // invia un byte di conferma del completamento della transazione
         out.write(esito.getBytes());
         out.write(Utils.toByteArray("\n"));
     }
 
     /**
+     * la seguente funzione definisce le operazioni svolte nella finestra temporale
+     * T1-T2 per le transazioni,
+     * in particolare prelevano il messagio inviatogli dal client, ne controllano la
+     * firma (ClientComunication)
+     * contrallano che questo è in possesso dell'NFT (checkNFT) e in caso
+     * affermativo procede con la scrittura del
+     * messaggio firmato sulla chain (ProtocolWriteOnChain) infine ritorna "true" se
+     * tutte le operazioni sono andate a buon fine
+     * inviando al client la conferma dell'avvenuta transazione.
      * 
-     * @param cSock socket con cui comunicare
-     * @param truststore truststore per ottenere la PK
-     * @param clientPK 
-     * @param IDclient
+     * @param sSock
+     * @param cSock      socket su cui comunicare
+     * @param truststore truststore Validatore
+     * @param clientPK   public Key del client
+     * @param IDclient   ID del client
      * @return
      * @throws Exception
      */
-    static boolean ClientVoteT1T2(SSLServerSocket sSock, Socket cSock, KeyStore truststore, PublicKey clientPK, int IDclient) throws Exception{
+    static boolean ClientVoteT1T2(SSLServerSocket sSock, Socket cSock, KeyStore truststore, PublicKey clientPK,
+            int IDclient) throws Exception {
         Boolean correctnessFirst = false;
         if (clientPK == null) {
             System.out.println("il client non è nel truststore del server non avverranno comunicazioni");
@@ -195,7 +225,27 @@ public class Validatore {
         return correctnessFirst;
     }
 
-    static boolean ClientConirmT2T3(SSLServerSocket sSock, Socket cSock, KeyStore truststore, PublicKey clientPK, int IDclient) throws Exception{
+    /**
+     * la seguente funzione definisce le operazioni svolte nella finestra temporale
+     * T2-T3 per le transazioni,
+     * in particolare prelevano la randomness inviatagli dal client, ne controllano
+     * la firma (ClientComunication)
+     * contrallano che questo è in possesso dell'NFT (checkNFT) e in caso
+     * affermativo procede con la scrittura della
+     * randomness firmata sulla chain (ProtocolWriteOnChain) infine ritorna "true"
+     * se tutte le operazioni sono andate a buon fine
+     * inviando al client la conferma dell'avvenuta transazione.
+     * 
+     * @param sSock
+     * @param cSock      socket su cui comunicare
+     * @param truststore truststore Validatore
+     * @param clientPK   public Key del client
+     * @param IDclient   ID del client
+     * @return
+     * @throws Exception
+     */
+    static boolean ClientConfirmT2T3(SSLServerSocket sSock, Socket cSock, KeyStore truststore, PublicKey clientPK,
+            int IDclient) throws Exception {
         byte[] secondTransaction = ClientComunication(cSock, clientPK, 32);
         Boolean correctnessSecond = false;
         if (SmartContract.checkNFT(truststore, IDclient + 1, clientPK))
@@ -203,7 +253,25 @@ public class Validatore {
         return correctnessSecond;
     }
 
-    static boolean SocietaFinalCommunication(SSLServerSocket sSock, Socket cSock, KeyStore truststore, PublicKey SocietyPK) throws Exception{
+    /**
+     * la seguente funzione definisce le operazioni svolte nella finestra temporale
+     * T3-T4 per le transazioni,
+     * in particolare prelevano la private key inviatagli dalla società, ne
+     * controllano la firma (SocietyFinalComunication)
+     * procede a eseguire la funzione dell smart conrtact adibita al calcolo
+     * dell'esito del referendum.
+     * Infine ritorna "true" se tutte le operazioni sono andate a buon fine inviando
+     * alla Società la conferma dell'avvenuta transazione.
+     * 
+     * @param sSock
+     * @param cSock      socket su cui comunicare
+     * @param truststore truststore Validatore
+     * @param SocietyPK  public Key del client
+     * @return
+     * @throws Exception
+     */
+    static boolean SocietaFinalCommunication(SSLServerSocket sSock, Socket cSock, KeyStore truststore,
+            PublicKey SocietyPK) throws Exception {
         PrivateKey SocPrivateKey = SocietyFinalComunication(cSock, SocietyPK, 67);
         ConfirmTransaction(cSock, "0");
         SmartContract.computeFinalResult(SocPrivateKey, 4);
@@ -212,14 +280,15 @@ public class Validatore {
 
     /**
      * questa funzione è operativa per separare le varie fasi della votazione
+     * 
      * @param split split da scrivere nel file
      * @throws Exception
      */
-    static void WriteSplitPhase(String split) throws Exception{
+    static void WriteSplitPhase(String split) throws Exception {
         try {
             AppendingObjectOutputStream outputStreamExist = new AppendingObjectOutputStream(
                     new FileOutputStream("ItalyChain.txt", true));
-            if(split!=null)
+            if (split != null)
                 outputStreamExist.writeObject(split.getBytes());
             else
                 outputStreamExist.writeObject(null);
@@ -251,24 +320,26 @@ public class Validatore {
 
         SSLServerSocket sSock = (SSLServerSocket) sockfact.createServerSocket(4000); // bind to port 4000
         int i = 0;
-        // il seguente ciclo permtte di ottenere le PK dei votanti di esempio dal trust store del Validatore
+        // il seguente ciclo permtte di ottenere le PK dei votanti di esempio dal trust
+        // store del Validatore
         for (i = 0; i < 4; i++) {
-            if (truststore != null) 
+            if (truststore != null)
                 clientPK[i] = obtainVoterPK(truststore, i + 1);
         }
-        System.out.println("\n\nCOMINCIA T1-T2");
-        // questa porzione di codice rappresenta la seconda fase T1-T2 in cui 4 votanti di esempio inviano il proprio voto
+        System.out.println("\n\nCOMINCIA T1-T2 ");
+        // questa porzione di codice rappresenta la seconda fase T1-T2 in cui 4 votanti
+        // di esempio inviano il proprio voto
         for (i = 0; i < 4; i++) {
-            System.out.println("attendo le connessioni della fase T1-T2");
+            System.out.println("Attendo le connessioni della fase T1-T2 ");
             sslSock[i] = (SSLSocket) sSock.accept(); // accept connections
-            System.out.println("\nconnection Client: " + i);
+            System.out.println("\nConnessione con Client numero " + i);
             // simula la votazione nella fase T1-T2 con annessa scrittura on chain
             Boolean correctnessFirst = ClientVoteT1T2(sSock, sslSock[i], truststore, clientPK[i], i);
-            System.out.println("invio la conferma dell'avvenuta prima transazione");
-            //codice relativo alla conferma della transazione
+            System.out.println("Invio la conferma dell'avvenuta prima transazione");
+            // codice relativo alla conferma della transazione
             if (correctnessFirst) {
                 ConfirmTransaction(sslSock[i], "0");
-            } else{
+            } else {
                 ConfirmTransaction(sslSock[i], "1");
             }
         }
@@ -277,25 +348,27 @@ public class Validatore {
         for (i = 0; i < 4; i++) {
             sslSock[i].close();
         }
-        // simula l'inizio della fase T2-T3 in particolare per separare i blocchi relativi alla prima fase e alla seconda 
+        // simula l'inizio della fase T2-T3 in particolare per separare i blocchi
+        // relativi alla prima fase e alla seconda
         // nel condice seguente abbiamo aggiunto un separatore "split"
         String split = "T2-T3";
         WriteSplitPhase(split);
 
-        System.out.println("\n\nCOMINCIA T2-T3");
-        // questa porzione di codice rappresenta la seconda fase T2-T3 in cui 4 votanti di esempio confermano il proprio voto inviando la propria randomness
+        System.out.println("\n\nCOMINCIA T2-T3 ");
+        // questa porzione di codice rappresenta la seconda fase T2-T3 in cui 4 votanti
+        // di esempio confermano il proprio voto inviando la propria randomness
         for (i = 0; i < 4; i++) {
-            System.out.println("attendo le connessioni della fase T2-T3");
+            System.out.println("Attendo le connessioni della fase T2-T3 ");
             sslSock[i] = (SSLSocket) sSock.accept(); // accept connections
-            System.out.println("\nconnection" + i);
+            System.out.println("\nConnessione con Client numero " + i);
             // simula la votazione nella fase T2-T3 con annessa scrittura on chain
-            Boolean correctnessSecond = ClientConirmT2T3(sSock, sslSock[i], truststore, clientPK[i], i);
-            //codice relativo alla conferma della transazione
-            System.out.println("invio la conferma dell'avvenuta seconda transazione");
+            Boolean correctnessSecond = ClientConfirmT2T3(sSock, sslSock[i], truststore, clientPK[i], i);
+            // codice relativo alla conferma della transazione
+            System.out.println("Invio la conferma dell'avvenuta seconda transazione");
             if (correctnessSecond) {
                 ConfirmTransaction(sslSock[i], "0");
             } else
-            ConfirmTransaction(sslSock[i], "1");
+                ConfirmTransaction(sslSock[i], "1");
         }
 
         // simula la fine di T2-T3
@@ -303,18 +376,20 @@ public class Validatore {
         for (i = 0; i < 4; i++) {
             sslSock[i].close();
         }
-        // simula l'inizio della fase T3-T4 in particolare per separare i blocchi relativi alla prima fase e alla seconda 
+        // simula l'inizio della fase T3-T4 in particolare per separare i blocchi
+        // relativi alla prima fase e alla seconda
         // nel condice seguente abbiamo aggiunto un separatore "split"
         WriteSplitPhase(null);
-                
-        //si ottiene la chiave pubblica della società
+
+        // si ottiene la chiave pubblica della società
         System.out.println("\n\nCOMINCIA T3-T4");
         PublicKey SocietyPK = obtainSocPK(truststore);
-        System.out.println("attendo connection Societa\n");
+        System.out.println("In attesa della connessione con la Societa \n");
 
         sslSock[4] = (SSLSocket) sSock.accept();
-        System.out.println("\nconnection con la società");
-        // la seguente funzione completerà una comunicazione con la società per ottenere la privatekey e poi invocherà la 
+        System.out.println("\nConnessione con Societa avvenuta con successo");
+        // la seguente funzione completerà una comunicazione con la società per ottenere
+        // la privatekey e poi invocherà la
         // funzione dello smart contract adibita al calcolo dell'esito del referendum
         SocietaFinalCommunication(sSock, sslSock[4], truststore, SocietyPK);
         System.out.println("FINE T3-T4");
