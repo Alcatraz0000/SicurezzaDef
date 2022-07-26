@@ -19,7 +19,9 @@ import java.security.KeyStore;
  * della randomness utilizzata.
  * Per la simulazione del sistema implementato è stato previsto il coinvolgimento di più votanti, motivo per cui il 
  * codice all'interno presenta delle parametrizzazioni, che fanno riferimento all'ID del votante in questione e 
- * al voto espresso da quest'ultimo relativamente al referendum in questione.
+ * al voto espresso da quest'ultimo relativamente al referendum in questione, inoltre per ciascuno dei votanti si 
+ * farà riferimento alla propria chiave pubblica.
+ * 
  */
 
 public class Votante {
@@ -51,7 +53,7 @@ public class Votante {
     }
 
     /**
-     * Tale funzione sancisce l'inizio dell'esecuzione di ciascuno dei votanti, prevede dei parametri passati a 
+     * Tale funzione sancisce l'inizio dell'esecuzione di ciascuno dei votanti, prevede dei parametri passati a riga
      * di comando funzionali allo svolgimento delle attività di voto. 
      * Inizialmente viene istaurata una connessione, mediante socket, attraverso la quale votante e validatore possano
      * comunicare, l'inizializzazione di tale connessione è preceduta da una fase di handshake.
@@ -62,7 +64,7 @@ public class Votante {
         SSLSocketFactory sockfact = (SSLSocketFactory) SSLSocketFactory.getDefault(); // similare a quella del server
         //eccetto per il fatto che usa SSLSocketFactory invece di SSLSocketServerFactory 
         SSLSocket cSock = (SSLSocket) sockfact.createSocket("localhost", 4000); // specifica l'host e la porta
-        cSock.startHandshake(); //handshake
+        cSock.startHandshake(); //Handshake
 
         String voto = args[1]; //il secondo parametro passato a riga di comando corrisponde alla preferenza espressa dal votante
         PrivateKey ClientPrivatekey = null;
@@ -93,7 +95,7 @@ public class Votante {
 
         KeyStore truststore = null;
         PublicKey SocietyPublicKey = null;
-        //ottenere dal truststore del client la chiave pubblica della società, utile per le cifrature successive
+        //ottenere dal truststore del votante la chiave pubblica della società, utile per le cifrature successive
         try {
             File file = new File("truststoreClient" + args[0] + ".jks");
             FileInputStream is = new FileInputStream(file);
@@ -119,7 +121,7 @@ public class Votante {
             //utilizzata nella cifratura del voto
             //si procede all'inizializzazione di una nuova socket in modo da poter effettuare il secondo invio da parte del votante
             SSLSocket cSock2 = (SSLSocket) sockfact.createSocket("localhost", 4000); // specifica host e porta
-            cSock2.startHandshake(); //handshake
+            cSock2.startHandshake(); //Handshake
             //la randomness ottenuta viene firmata
             byte[] signature = Cryptare.signature(ClientPrivatekey, r); 
             ByteArrayOutputStream outputStream2 = new ByteArrayOutputStream();
