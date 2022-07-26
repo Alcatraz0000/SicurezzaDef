@@ -13,21 +13,18 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 /**
  *
- * @author nando
- * @time Jul 21, 2022 12:51:32 PM
+ * @author Kryptos
  */
+
 public class KeyGenerator {
-    
-    
-    public static KeyPair generateKey(String name, String surname,int code) throws Exception
-    {
+
+    public static KeyPair generateKey(String name, String surname, int code) throws Exception {
         Security.addProvider(new BouncyCastleProvider());
         KeyPairGenerator key = KeyPairGenerator.getInstance("EC", "BC");
         String name1 = "secp256r1";
         key.initialize(new ECGenParameterSpec(name1));
-        KeyPair keyPair = key.generateKeyPair(); 
+        KeyPair keyPair = key.generateKeyPair();
         return keyPair;
     }
-    
 
 }

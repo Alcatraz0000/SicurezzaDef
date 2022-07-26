@@ -12,6 +12,8 @@ import java.security.cert.X509Certificate;
 import java.security.PrivateKey;
 import java.security.KeyStore;
 
+import java.util.Arrays;
+
 import java.security.spec.PKCS8EncodedKeySpec;
 
 import org.bouncycastle.util.encoders.Hex;
@@ -19,15 +21,23 @@ import org.bouncycastle.jce.ECNamedCurveTable;
 import org.bouncycastle.jce.spec.ECParameterSpec;
 import org.bouncycastle.jce.spec.ECPublicKeySpec;
 
+/**
+ *
+ * @author Kryptos
+ */
+
 public class Validatore {
     public static String s = "Server";
 
-    /*
+    /**
      * ProtocolWriteOnChain è una funzione che permette di scrivere sulla ItalyChain (identificata come un file di testo)
-     * si distinguono due caso:
-     *  il caso in cui il file non è mai stato creato, prima viene creato (con l'header) e dopo si scrive la transazione.
-     *  il caso in cui il file esiste già, viene aperto in modalità append sfruttando una classe da noi creata (evita di scrivere l'header) e scrive la transazione.
-     *  
+     * si distinguono due casi:
+     *  -il caso in cui il file non è mai stato creato, prima viene creato (con l'header) e dopo si scrive la transazione.
+     *  -il caso in cui il file esiste già, viene aperto in modalità append sfruttando una classe da noi creata (evita di scrivere l'header) e scrive la transazione.
+     * @param transaction
+     * @param VoterPK
+     * @return
+     * @throws Exception
      */
     static Boolean ProtocolWriteOnChain(byte[] transaction, PublicKey VoterPK) throws Exception {
         File file1 = new File("ItalyChain.txt");
@@ -59,224 +69,163 @@ public class Validatore {
         return true;
     }
 
-    // VALIDATORE
-    static byte[] ClientComunication(Socket sSock, PublicKey VoterPK) throws Exception {// note that the SSLSocket
-                                                                                        // object is converted in a
-                                                                                        // standard Socket object and
-                                                                                        // henceforth we can work as for
-                                                                                        // standard Java sockets
+    /**
+     * in questo protocollo il Votante manda un array di bytes di una dimensione fissata come parametro firmato al Validatore.
+     * Questo controlla che la firma sia coretta e lo ritorna al chiamante al quale poi sono delegati comportamenti successivi
+     * @param sSock
+     * @param VoterPK
+     * @return
+     * @throws Exception
+     */
+    static byte[] ClientComunication(Socket sSock, PublicKey VoterPK, int messageDimension) throws Exception {
 
         System.out.println("session started.");
-
-        InputStream in = sSock.getInputStream();
-
         // convert the socket to input and output stream
-        // OutputStream out = sSock.getOutputStream();
-        // henceforth the server can send a byte array X to the server just writing with
-        // out.write(X)
-        // and can read a byte c from the server with c=in.read()
-        // in this specific protocol the Client first sends the string "Client" to the
-        // Server and receives the string "Server" from the Server and prints it
-        // The server sends back the string received to the Client, so the Server will
-        // send to the Client the string "Client" and the Client prints it
-        // so in the end the Client will print ServerClient
-        // The protocol is stupid and serves only to demonstrate how to read and write
-        // on secure sockets
-
-        // out.write(Utils.toByteArray(s));
-
-        byte[] message = new byte[234];
-
+        InputStream in = sSock.getInputStream();
+        // messaggio da ricevere 234 32
+        byte[] message = new byte[messageDimension];
         int tmp = 0;
-
-        /*
-         * for (int i=0;(tmp = in.read()) != '\n';i++)
-         * {
-         * message[i] = (byte)tmp;
-         * //out.write(ch);
-         * System.out.println(i);
-         * 
-         * }
-         */
         int i = 0;
         TimeUnit.MILLISECONDS.sleep(1000);
-        for (i = 0; i < 234; i++) {
+        //con il seguente for si apprendono tutti i byte del messaggio nell'apposito array
+        for (i = 0; i < messageDimension; i++) {
             tmp = in.read();
-            // System.out.println(tmp);
             message[i] = (byte) tmp;
-            // TimeUnit.MILLISECONDS.sleep(50);
-            // out.write(ch);
         }
-
+        //si definisce la lunghezza dei byte del vettore firma in base ai byte che ancora devono essere letti
         int signatureLength = in.available();
         byte[] signature = new byte[signatureLength];
-
+        //con il seguente for si apprendono tutti i byte della firma nell'apposito array
         for (i = 0; i < signatureLength; i++) {
             tmp = in.read();
-            // System.out.println(tmp);
             signature[i] = (byte) tmp;
-            TimeUnit.MILLISECONDS.sleep(50);
-            // out.write(ch);
         }
-
-        // System.out.println(i);
         TimeUnit.MILLISECONDS.sleep(50);
-        // System.out.println("\nMessaggio ricevuto: " + new
-        // String(Hex.encode(message)));
-        // System.out.println("\nfirma ricevuta: " + new String(Hex.encode(signature)));
+        // viene controllata l'autentiucità del messaggio
         Boolean verify = Cryptare.verifySignature(VoterPK, signature, message);
+        //in caso in cui la firma non è corretta verrà stampato un messaggio e tornato null
         if (verify != true) {
             System.out.println("\nMessaggio non firmato correttamente: ");
             return null;
         }
-        String recived = new String(Hex.encode(message));
-        System.out.println("\nMessaggio ricevuto: " + recived);
-        // out.write('\n');
-        // sSock.close(); // close connection
+        
         System.out.println("session closed.");
-
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        outputStream.write(message);
-        outputStream.write(signature);
-        return outputStream.toByteArray();
+        return Utils.concatBytes(message, signature);
     }
 
-    // VALIDATORE
-    static byte[] ClientComunicationRandomness(Socket sSock, PublicKey VoterPK) throws Exception {// note that the
-                                                                                                  // SSLSocket object is
-                                                                                                  // converted in a
-                                                                                                  // standard Socket
-                                                                                                  // object and
-                                                                                                  // henceforth we can
-                                                                                                  // work as for
-                                                                                                  // standard Java
-                                                                                                  // sockets
+    /**
+     * la seguente funzione definisce il protocollo con cui la società invia la propria secret key al validatore utililizzata poi 
+     * per invocare la funzione dello smart contract adibita a calcolare l'esito finale del referndum
+     * @param sSock socket per la comunicazione
+     * @param SocietyPK publicKey della società
+     * @param messageDimension dimensione del messaggio che il validatore riceve
+     * @return
+     * @throws Exception
+     */
+    static PrivateKey SocietyFinalComunication(Socket sSock, PublicKey SocietyPK, int messageDimension) throws Exception {
 
-        System.out.println("session started 2 part.");
-        InputStream in = sSock.getInputStream();
-
-        byte[] message = new byte[32];
-        int tmp = 0;
-        int i = 0;
-        TimeUnit.MILLISECONDS.sleep(1000);
-        for (i = 0; i < 32; i++) {
-            tmp = in.read();
-            System.out.println(tmp);
-            message[i] = (byte) tmp;
-            // TimeUnit.MILLISECONDS.sleep(50);
-            // out.write(ch);
-        }
-
-        int signatureLength = in.available();
-        byte[] signature = new byte[signatureLength];
-
-        for (i = 0; i < signatureLength; i++) {
-            tmp = in.read();
-            System.out.println(tmp);
-            signature[i] = (byte) tmp;
-            TimeUnit.MILLISECONDS.sleep(50);
-            // out.write(ch);
-        }
-        TimeUnit.MILLISECONDS.sleep(50);
-        // System.out.println("\nMessaggio ricevuto: " + new
-        // String(Hex.encode(message)));
-        // System.out.println("\nfirma ricevuta: " + new String(Hex.encode(signature)));
-        Boolean verify = Cryptare.verifySignature(VoterPK, signature, message);
-        if (verify != true) {
-            System.out.println("\nMessaggio non firmato correttamente: ");
-            return null;
-        }
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        outputStream.write(message);
-        outputStream.write(signature);
-        return outputStream.toByteArray();
-    }
-
-    static PrivateKey SocietyFinalComunication(Socket sSock, PublicKey SocietyPK) throws Exception {// note that the
-                                                                                                    // SSLSocket object
-                                                                                                    // is converted in a
-                                                                                                    // standard Socket
-                                                                                                    // object and
-                                                                                                    // henceforth we can
-                                                                                                    // work as for
-                                                                                                    // standard Java
-                                                                                                    // sockets
-
-        System.out.println("session started 3 part.");
-        InputStream in = sSock.getInputStream();
-
-        byte[] message = new byte[67];
-        int tmp = 0;
-        int i = 0;
-        TimeUnit.MILLISECONDS.sleep(1000);
-        for (i = 0; i < 67; i++) {
-            tmp = in.read();
-            System.out.println(tmp);
-            message[i] = (byte) tmp;
-            // TimeUnit.MILLISECONDS.sleep(50);
-            // out.write(ch);
-        }
-
-        int signatureLength = in.available();
-        byte[] signature = new byte[signatureLength];
-        for (i = 0; i < signatureLength; i++) {
-            tmp = in.read();
-            System.out.println(tmp);
-            signature[i] = (byte) tmp;
-            TimeUnit.MILLISECONDS.sleep(50);
-            // out.write(ch);
-        }
-        TimeUnit.MILLISECONDS.sleep(50);
-        // System.out.println("\nMessaggio ricevuto: " + new
-        // String(Hex.encode(message)));
-        // System.out.println("\nfirma ricevuta: " + new String(Hex.encode(signature)));
-        Boolean verify = Cryptare.verifySignature(SocietyPK, signature, message);
-        if (verify != true) {
-            System.out.println("\nMessaggio non firmato correttamente: ");
-            return null;
-        }
-
+        byte[] message = ClientComunication(sSock, SocietyPK, messageDimension);
+        // Alla classica client comunication si aggiunge la rigenerazione della chiave della società partendo dai bytes ricevuti da quest'ultima
         KeyFactory kf = KeyFactory.getInstance("EC", "BC"); // or "EC" or whatever
-        PrivateKey privateKey = kf.generatePrivate(new PKCS8EncodedKeySpec(message));
+        PrivateKey privateKey = kf.generatePrivate(new PKCS8EncodedKeySpec(Arrays.copyOfRange(message, 0, messageDimension)));
         System.out.println("\nPrivate Key calcolata arrivata: " + privateKey);
         return privateKey;
     }
 
-    static PublicKey obtainVoterPK(KeyStore truststore, int IDClient) throws Exception {// note that the SSLSocket
-                                                                                        // object is converted in a
-                                                                                        // standard Socket object and
-                                                                                        // henceforth we can work as for
-                                                                                        // standard Java sockets
+    /**
+     * la seguente funzione permette di ottenere la public key dell'i-esimo client partire dal certificato dello stesso contenuto nel trustore del
+     *  Validatore (è solo operativa senza grossi significati)
+     * @param truststore
+     * @param IDClient
+     * @return
+     * @throws Exception
+     */
+    static PublicKey obtainVoterPK(KeyStore truststore, int IDClient) throws Exception {
         String alias = "sslClient" + String.valueOf(IDClient);
         // Get certificate of public key
         X509Certificate cert = (X509Certificate) truststore.getCertificate(alias);
-        // Here it prints the public key
-        // System.out.println("Public Key Client" + String.valueOf(IDClient) + ":");
-        // System.out.println(Utils.toHex(cert.getPublicKey().getEncoded()));
         return cert.getPublicKey();
     }
 
-    static PublicKey obtainSocPK(KeyStore truststore) throws Exception {// note that the SSLSocket object is converted
-                                                                        // in a standard Socket object and henceforth we
-                                                                        // can work as for standard Java sockets
+    /**
+     * la seguente funzione permette di ottenere la public key della società partire dal certificato della stessa contenuto nel trustore del
+     * Validatore (è solo operativa senza grossi significati)
+     * @param truststore
+     * @return
+     * @throws Exception
+     */
+    static PublicKey obtainSocPK(KeyStore truststore) throws Exception {
         String alias = "sslSociety";
-        // Get certificate of public key
         X509Certificate cert = (X509Certificate) truststore.getCertificate(alias);
-        // Here it prints the public key
-        // System.out.println("Public Key Client" + String.valueOf(IDClient) + ":");
-        // System.out.println(Utils.toHex(cert.getPublicKey().getEncoded()));
         return cert.getPublicKey();
     }
 
-    static void ConfirmTransaction(Socket cSock, String esito) throws Exception {// note that the SSLSocket object is
-                                                                                 // converted in a standard Socket
-                                                                                 // object and henceforth we can work as
-                                                                                 // for standard Java sockets
+    /**
+     * la seguente funzione permette di inviare la conferma del completamento delle operazioni sulla transazione
+     * @param cSock Socket su cui inviare il byte di ack
+     * @param esito esito dell'invio (positivo o negativo)
+     * @throws Exception
+     */
+    static void ConfirmTransaction(Socket cSock, String esito) throws Exception {
+        //imposta la socket in output
         OutputStream out = cSock.getOutputStream();
-
+        //invia un byte di conferma del completamento della transazione
         out.write(esito.getBytes());
-        // TimeUnit.MILLISECONDS.sleep(5000);
         out.write(Utils.toByteArray("\n"));
+    }
+
+    /**
+     * 
+     * @param cSock socket con cui comunicare
+     * @param truststore truststore per ottenere la PK
+     * @param clientPK 
+     * @param IDclient
+     * @return
+     * @throws Exception
+     */
+    static boolean ClientVoteT1T2(SSLServerSocket sSock, Socket cSock, KeyStore truststore, PublicKey clientPK, int IDclient) throws Exception{
+        Boolean correctnessFirst = false;
+        if (clientPK == null) {
+            System.out.println("il client non è nel truststore del server non avverranno comunicazioni");
+            return false;
+        }
+        byte[] firstTransaction = ClientComunication(cSock, clientPK, 234);
+        if (SmartContract.checkNFT(truststore, IDclient + 1, clientPK))
+            correctnessFirst = ProtocolWriteOnChain(firstTransaction, clientPK);
+        return correctnessFirst;
+    }
+
+    static boolean ClientConirmT2T3(SSLServerSocket sSock, Socket cSock, KeyStore truststore, PublicKey clientPK, int IDclient) throws Exception{
+        byte[] secondTransaction = ClientComunication(cSock, clientPK, 32);
+        Boolean correctnessSecond = false;
+        if (SmartContract.checkNFT(truststore, IDclient + 1, clientPK))
+            correctnessSecond = ProtocolWriteOnChain(secondTransaction, clientPK);
+        return correctnessSecond;
+    }
+
+    static boolean SocietaFinalCommunication(SSLServerSocket sSock, Socket cSock, KeyStore truststore, PublicKey SocietyPK) throws Exception{
+        PrivateKey SocPrivateKey = SocietyFinalComunication(cSock, SocietyPK, 67);
+        ConfirmTransaction(cSock, "0");
+        SmartContract.computeFinalResult(SocPrivateKey, 4);
+        return true;
+    }
+
+    /**
+     * questa funzione è operativa per separare le varie fasi della votazione
+     * @param split split da scrivere nel file
+     * @throws Exception
+     */
+    static void WriteSplitPhase(String split) throws Exception{
+        try {
+            AppendingObjectOutputStream outputStreamExist = new AppendingObjectOutputStream(
+                    new FileOutputStream("ItalyChain.txt", true));
+            if(split!=null)
+                outputStreamExist.writeObject(split.getBytes());
+            else
+                outputStreamExist.writeObject(null);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public static void main(String[] args) throws Exception {
@@ -294,7 +243,6 @@ public class Validatore {
         } catch (Exception e) {
             System.out.println(e);
         }
-
         SSLServerSocketFactory sockfact = (SSLServerSocketFactory) SSLServerSocketFactory.getDefault(); //
         // create a factory object to handle server connections initialized with the
         // keystore passed as argument in the commandline (see Slides)
@@ -302,100 +250,73 @@ public class Validatore {
         PublicKey[] clientPK = new PublicKey[4];
 
         SSLServerSocket sSock = (SSLServerSocket) sockfact.createServerSocket(4000); // bind to port 4000
-        // sSock.setNeedClientAuth(true);
-        // int val;
-        // 1. C=SHA256(r || x) where r is a 256-bit long (pseudo)random string
-        //
-
-        /*
-         * byte[][] voto = new byte[4][1];
-         * byte[][] preimagerecv = new byte[2][17]; // 17 BYTES because the first byte
-         * contains the bid and the remaining
-         * // the randomness
-         * int tmp = 0;/*
-         */
-        for (int i = 0; i < 4; i++) {
-            System.out.println("attendo connection\n");
-            sslSock[i] = (SSLSocket) sSock.accept(); // accept connections
-            System.out.println("new connection\n");
-            if (truststore != null) {
+        int i = 0;
+        // il seguente ciclo permtte di ottenere le PK dei votanti di esempio dal trust store del Validatore
+        for (i = 0; i < 4; i++) {
+            if (truststore != null) 
                 clientPK[i] = obtainVoterPK(truststore, i + 1);
-                if (clientPK[i] == null) {
-                    System.out.println("il client non è nel truststore del server non avverranno comunicazioni");
-                    continue;
-                }
-                // henceforth sslSock can be used to read and write on the socket - see the
-                // Protocol procedure
-                // notice that from this proint the code of the Server and Client is identical -
-                // both can read and write using the same oject
-                // you could replace Protocol with your own protocol
-                byte[] firstTransaction = ClientComunication(sslSock[i], clientPK[i]);
-                Boolean correctnessFirst = false;
-                if (SmartContract.checkNFT(truststore, i + 1, clientPK[i]))
-                    correctnessFirst = ProtocolWriteOnChain(firstTransaction, clientPK[i]);
-                System.out.println("sto per inviare");
-                if (correctnessFirst) {
-                    System.out.println("0");
-                    ConfirmTransaction(sslSock[i], "0");
-                } else
-                    System.out.println("1");
+        }
+        System.out.println("\n\nCOMINCIA T1-T2");
+        // questa porzione di codice rappresenta la seconda fase T1-T2 in cui 4 votanti di esempio inviano il proprio voto
+        for (i = 0; i < 4; i++) {
+            System.out.println("attendo le connessioni della fase T1-T2");
+            sslSock[i] = (SSLSocket) sSock.accept(); // accept connections
+            System.out.println("\nconnection Client: " + i);
+            // simula la votazione nella fase T1-T2 con annessa scrittura on chain
+            Boolean correctnessFirst = ClientVoteT1T2(sSock, sslSock[i], truststore, clientPK[i], i);
+            System.out.println("invio la conferma dell'avvenuta prima transazione");
+            //codice relativo alla conferma della transazione
+            if (correctnessFirst) {
+                ConfirmTransaction(sslSock[i], "0");
+            } else{
                 ConfirmTransaction(sslSock[i], "1");
             }
         }
-        // simulate the end of T1-T2
+        // simula la fine di T1-T2
         TimeUnit.MILLISECONDS.sleep(5000);
-        // now start T2-T3 phase
-        String split = "T2-T3";
-        try {
-            AppendingObjectOutputStream outputStreamExist = new AppendingObjectOutputStream(
-                    new FileOutputStream("ItalyChain.txt", true));
-            outputStreamExist.writeObject(split.getBytes());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        System.out.println("ho scrittto split t2-t3");
-
-        for (int i = 0; i < 4; i++) {
+        for (i = 0; i < 4; i++) {
             sslSock[i].close();
         }
-        // SSLServerSocket sSock2 = (SSLServerSocket)sockfact.createServerSocket(5001);
-        // // bind to port 4000
-        // this lines are just to split the two phasis in the Italy Chain for comodity
-        for (int i = 0; i < 4; i++) {
-            System.out.println("attendoConnessioni 2 volta");
+        // simula l'inizio della fase T2-T3 in particolare per separare i blocchi relativi alla prima fase e alla seconda 
+        // nel condice seguente abbiamo aggiunto un separatore "split"
+        String split = "T2-T3";
+        WriteSplitPhase(split);
+
+        System.out.println("\n\nCOMINCIA T2-T3");
+        // questa porzione di codice rappresenta la seconda fase T2-T3 in cui 4 votanti di esempio confermano il proprio voto inviando la propria randomness
+        for (i = 0; i < 4; i++) {
+            System.out.println("attendo le connessioni della fase T2-T3");
             sslSock[i] = (SSLSocket) sSock.accept(); // accept connections
-            System.out.println("okey" + i);
-            byte[] secondTransaction = ClientComunicationRandomness(sslSock[i], clientPK[i]);
-            Boolean correctnessSecond = false;
-            if (SmartContract.checkNFT(truststore, i + 1, clientPK[i]))
-                correctnessSecond = ProtocolWriteOnChain(secondTransaction, clientPK[i]);
-            System.out.println("sto per inviare");
+            System.out.println("\nconnection" + i);
+            // simula la votazione nella fase T2-T3 con annessa scrittura on chain
+            Boolean correctnessSecond = ClientConirmT2T3(sSock, sslSock[i], truststore, clientPK[i], i);
+            //codice relativo alla conferma della transazione
+            System.out.println("invio la conferma dell'avvenuta seconda transazione");
             if (correctnessSecond) {
-                System.out.println("0");
                 ConfirmTransaction(sslSock[i], "0");
             } else
-                System.out.println("1");
             ConfirmTransaction(sslSock[i], "1");
         }
 
+        // simula la fine di T2-T3
         TimeUnit.MILLISECONDS.sleep(5000);
-        try {
-            AppendingObjectOutputStream EOF = new AppendingObjectOutputStream(
-                    new FileOutputStream("ItalyChain.txt", true));
-            EOF.writeObject(null);
-        } catch (Exception e) {
-            e.printStackTrace();
+        for (i = 0; i < 4; i++) {
+            sslSock[i].close();
         }
-
-        System.out.println("ho scrittto nullo, inizio t3-t4");
+        // simula l'inizio della fase T3-T4 in particolare per separare i blocchi relativi alla prima fase e alla seconda 
+        // nel condice seguente abbiamo aggiunto un separatore "split"
+        WriteSplitPhase(null);
+                
+        //si ottiene la chiave pubblica della società
+        System.out.println("\n\nCOMINCIA T3-T4");
         PublicKey SocietyPK = obtainSocPK(truststore);
         System.out.println("attendo connection Societa\n");
-        sslSock[4] = (SSLSocket) sSock.accept();
-        PrivateKey SocPrivateKey = SocietyFinalComunication(sslSock[4], SocietyPK);
 
-        System.out.println("sto per inviare");
-        System.out.println("0");
-        ConfirmTransaction(sslSock[4], "0");
-        SmartContract.computeFinalResult(SocPrivateKey, 4);
+        sslSock[4] = (SSLSocket) sSock.accept();
+        System.out.println("\nconnection con la società");
+        // la seguente funzione completerà una comunicazione con la società per ottenere la privatekey e poi invocherà la 
+        // funzione dello smart contract adibita al calcolo dell'esito del referendum
+        SocietaFinalCommunication(sSock, sslSock[4], truststore, SocietyPK);
+        System.out.println("FINE T3-T4");
     }
 }

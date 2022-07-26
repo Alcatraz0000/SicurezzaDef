@@ -10,14 +10,19 @@ import javax.net.ssl.X509KeyManager;
 import javax.net.ssl.X509KeyManager;
 import java.io.FileInputStream;
 import java.io.IOException;
+
+/**
+ *
+ * @author Kryptos
+ */
+
 public class MyKeyManager implements X509KeyManager {
     private KeyStore keyStore;
     private String alias;
     private char[] password;
 
     MyKeyManager(String keyStoreFile, char[] password, String alias)
-        throws IOException, GeneralSecurityException
-    {
+            throws IOException, GeneralSecurityException {
         this.alias = alias;
         this.password = password;
         InputStream stream = new FileInputStream(keyStoreFile);
@@ -34,22 +39,22 @@ public class MyKeyManager implements X509KeyManager {
     }
 
     public X509Certificate[] getCertificateChain(String alias) {
-        
-	    try {
+
+        try {
             java.security.cert.Certificate[] certs = keyStore.getCertificateChain(alias);
             if (certs == null || certs.length == 0)
                 return null;
             X509Certificate[] x509 = new X509Certificate[certs.length];
             for (int i = 0; i < certs.length; i++)
-                x509[i] = (X509Certificate)certs[i];
+                x509[i] = (X509Certificate) certs[i];
             return x509;
         } catch (Exception e) {
             return null;
-        } 
+        }
     }
 
     public String chooseServerAlias(String keyType, Principal[] issuers,
-                                    Socket socket) {
+            Socket socket) {
         return alias;
     }
 
@@ -68,5 +73,5 @@ public class MyKeyManager implements X509KeyManager {
     public String chooseServerAlias(String parm1, Principal[] parm2) {
         return alias;
     }
-    
+
 }
