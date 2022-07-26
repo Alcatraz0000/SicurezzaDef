@@ -1,122 +1,126 @@
 /*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Main.java to edit this template
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
  */
+
+
+
+import java.io.*;
+
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.SecureRandom;
+import org.bouncycastle.util.encoders.Hex;
+
+import java.util.Arrays; 
 
 
 /**
  *
- * @author vitot
+ * @author Kryptos
  */
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.Security;
-import java.security.spec.ECGenParameterSpec; // generators of parameters for Elliptic Curves
-import javax.crypto.Cipher;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
-public class eVote {
+/**
+ * Questa classe contiene vari metodi utili per il Votante. L'utilizzo di questi metodi è dato dalla classe SSLClient
+ * che simula effettivamente l'onesto votante all'interno del sistema. 
+ * I metodi al suo interno sono relativi all'invio del voto espresso e successivamente della conferma. 
+ * L'unico attributo del Votante risulta essere la Public Key della Società, utilizzata per la cifratura del voto.
+ */
+public class toVote {
+    
+    static PublicKey  PkSocietà = null;
 
     /**
-     * @param args the command line arguments
+     * Metodo per settare l'attributo statico della classe per il salvataggio della PublicKey della Società.
+     * @param PkSocietà
      */
-    public static void main(String[] args) throws Exception{
+    public static void setPkSocietà(PublicKey PkSocietà){
+        toVote.PkSocietà = PkSocietà;
+    }
+    
+    /**
+     * Metodo tramite il quale un votante genera l'output da inviare per esprimere un voto. La funzione viene utilizzata dall'SSLClient che passerà
+     * come parametri la private key associata al votante (generata in SSLClient), la public key della società con la quale viene 
+     * effettuata la cifratura, il voto da inviare e la publick key associata al cliente (generata insieme alla SK in SSLClient). 
+     * Inizialmente generiamo la randomness r, che viene cifrata con la public key del votante ottenendo R=Enc(PkV,r). La randomness r viene 
+     * concatenata con il voto da esprimere; la concatenazione viene cifrata con SHA256, ottenendo quindi C=SHA256(r||x). Successivamente
+     * viene effettuata la cifratura con ECIES di C con la Public Key della Società, quindi otteniamo E=Enc(PkSocietà,C). A questo punto 
+     * c'è la parte di firma del messaggio m = (R,E) con ECDSA, quindi potremo ritornare il contenuto da inviare sulla ItalyChain, ovvero
+     * (m,Sigma) dove Sigma = Sig(SecretKeyVotante, m). 
+     * @param privateKey
+     * @param PublicKeySocietà
+     * @param voto
+     * @param publicKey
+     * @return
+     * @throws Exception
+     */
+    public static byte[] vote(PrivateKey privateKey, PublicKey PublicKeySocietà, String voto, PublicKey publicKey) throws Exception{
         
-        //questa classe stiamo per eliminarla
-        //stiamo davvero per eliminarla
-        // TODO code application logic here
-        Security.addProvider(new BouncyCastleProvider());
-        System.out.println(Security.getProvider("BC"));
-        String name = "secp256r1"; // type of elliptic curve, other examples secp256k1
-        KeyPairGenerator key = KeyPairGenerator.getInstance("ECDH");
-        
-        key.initialize(new ECGenParameterSpec(name));
-        KeyPair keyPair = key.generateKeyPair();
-        System.out.println(keyPair.getPublic());
-        KeyPairGenerator key2 = KeyPairGenerator.getInstance("ECDH");
-        
-        key.initialize(new ECGenParameterSpec(name));
-        KeyPair keyPairSocietà = key2.generateKeyPair();
-        
-        
-        Votante.setPkSocietà(keyPairSocietà.getPublic());
-        
-        Votante.vote(keyPair.getPrivate(), 0, keyPair.getPublic());
-        
-        
-       /*
-        // create a challenge
-        String test = "mario";
-        
-        byte[] challenge = test.getBytes();
-
-        // sign using the private key
-        Signature sig = Signature.getInstance("ECDSA");
-        sig.initSign(privateKey);
-        sig.update(challenge);
-        byte[] signature = sig.sign();
-        
-        
-        Signature sig2 = Signature.getInstance("ECDSA");
-        
-        sig2.initVerify(publicKey);
-        
-        sig2.update(challenge);
-
-        boolean keyPairMatches = sig2.verify(signature);      
-        System.out.println(keyPairMatches);
-         
-         
+      
         SecureRandom random = new SecureRandom();
-        byte bytes[] = new byte[32]; 
-        random.nextBytes(bytes); 
+        byte Randomness[] = new byte[32]; 
+        random.nextBytes(Randomness); 
         
-        String Randomness = new String(Hex.encode(bytes));
-        Randomness = Randomness.concat("mario1");
+        System.out.println("\nRandomness votante iniziale: " + new String(Hex.encode(Randomness)));
+
+        byte[] encryptedRandomness = Cryptare.encrypt(Randomness, publicKey);
         
-        System.out.println(Randomness);
-        
+        byte[] randVoto = Utils.concatBytes(Randomness,voto.getBytes());
+                
         MessageDigest digest = MessageDigest.getInstance("SHA-256");
         
-        digest.update(Randomness.getBytes(StandardCharsets.UTF_8));
+        digest.update(randVoto);
         
-        byte[] hash = digest.digest();
+        byte[] hashOfRandVoto = digest.digest();
         
-        String sha256hex = new String(Hex.encode(hash));
-        
-        System.out.println(sha256hex);
-        String plainText = "mario";
-       
-       
-        Cipher iesCipher = Cipher.getInstance("ECIES");
-        System.out.println(" " + iesCipher.getProvider());
-        
-        iesCipher.init(Cipher.ENCRYPT_MODE, keyPair.getPublic());
-        
-        byte cipherText[] = new byte[iesCipher.getOutputSize(plainText.getBytes().length)];
-        
-        int ctlength=iesCipher.update(plainText.getBytes(),0,plainText.getBytes().length,cipherText,0);
-        ctlength+=iesCipher.doFinal(cipherText, ctlength);
-        
-        System.out.println(Utils.toString(cipherText));
-        
-        Cipher iesCipher2 = Cipher.getInstance("ECIES");
-        
-        iesCipher2.init(Cipher.DECRYPT_MODE, keyPair.getPrivate());
-        
-        byte []plainText2=new byte[iesCipher2.getOutputSize(cipherText.length)]; 
-        
-        int ctlength2=iesCipher2.update(cipherText,0,ctlength,plainText2,0);
-        
-        ctlength2+=iesCipher2.doFinal(plainText2,ctlength2);
-        
-        System.out.println("decrypted plaintext: "+ Utils.toString(plainText2));*/
-       
-       
-       
-       
-       
-        
+        byte[] encryptedCypherText = Cryptare.encrypt(hashOfRandVoto, PublicKeySocietà);
+
+        byte[] result = Utils.concatBytes( encryptedRandomness,encryptedCypherText);
+
+        byte[] signature = Cryptare.signature(privateKey, result);    
+
+        return Utils.concatBytes(result,signature);
+    }
+    
+    
+    /**
+     * Metodo per inviare la conferma del voto. Questa conferma sarà effettuata attraverso l’invio della randomness r. 
+     * Dalla blockchain verrà prelevato il valore R associato alla specifica chiave pubblica del votante passata come parametro, 
+     * dal quale si potrà risalire con un algoritmo di decifratura alla randomness r, attraverso la chiave privata del votante stesso, passata come parametro. 
+     * Una volta decifrato r, il valore viene ritornato alla classe SSLClient che utilizza questo metodo, la quale provvederà a firmare il messaggio
+     * e inviando quindi sulla chain (r,Sigma) con Sigma=Sig(SkV,r), con firma ottenuta sempre con l'algoritmo ECDSA. 
+     * @param privateKey
+     * @param publicKey
+     * @return
+     * @throws Exception
+     */
+    public static byte[] confirmVote(PrivateKey privateKey, PublicKey publicKey) throws Exception{
+        byte[] encryptedMessage = null;
+        byte[] possiblePublicKey = null;
+        try{
+            ObjectInputStream ois = new ObjectInputStream( new FileInputStream("ItalyChain.txt"));
+            possiblePublicKey = (byte[]) ois.readObject();
+            while(Arrays.equals(possiblePublicKey,"T2-T3".getBytes()) == false){               
+                if(Arrays.equals(possiblePublicKey, publicKey.getEncoded())){
+                    byte[] tmp = (byte[]) ois.readObject();
+                    encryptedMessage = Arrays.copyOfRange(tmp, 0, 234); 
+                    break;
+                }else
+                    ois.readObject();
+                possiblePublicKey = (byte[]) ois.readObject();
+            }
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+        byte[] randomness = null;
+        if(encryptedMessage != null){
+            randomness = Cryptare.decrypt(Arrays.copyOfRange(encryptedMessage, 0, 117),privateKey);
+            System.out.println("randomness ottenuta dalla chain: " + new String(Hex.encode(randomness)));
+        }
+        return randomness;
     }
 }
-

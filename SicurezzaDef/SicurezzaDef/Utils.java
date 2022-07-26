@@ -1,5 +1,7 @@
 
 //package projectsecurity;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.SecureRandom;
@@ -110,7 +112,13 @@ public static byte[] toByteArray(
         
         return bytes;
     }
-
+    
+    public static byte[] concatBytes(byte[] first, byte[] second) throws IOException{
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream( );
+        outputStream.write( first );
+        outputStream.write( second );
+        return outputStream.toByteArray( );
+    }
 
 
 

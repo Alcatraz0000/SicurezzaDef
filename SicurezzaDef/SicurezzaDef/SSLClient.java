@@ -144,15 +144,15 @@ public class SSLClient {
         }
 
         if (ClientPrivatekey != null && ClientPublickey != null && SocietyPublicKey != null) {
-            byte[] m = Votante.vote(ClientPrivatekey, SocietyPublicKey, voto, ClientPublickey);
+            byte[] m = toVote.vote(ClientPrivatekey, SocietyPublicKey, voto, ClientPublickey);
             Protocol(cSock, m);
             // simulate the end of T1-T2
             TimeUnit.MILLISECONDS.sleep(25000);
             // now start T2-T3 phase
-            byte[] r = Votante.confirmVote(ClientPrivatekey, ClientPublickey);
+            byte[] r = toVote.confirmVote(ClientPrivatekey, ClientPublickey);
             SSLSocket cSock2 = (SSLSocket) sockfact.createSocket("localhost", 4000); // specify host and port
             cSock2.startHandshake();
-            byte[] signature = Cryptare.signature(ClientPublickey, ClientPrivatekey, r);
+            byte[] signature = Cryptare.signature(ClientPrivatekey, r);
             ByteArrayOutputStream outputStream2 = new ByteArrayOutputStream();
             outputStream2.write(r);
             outputStream2.write(signature);
