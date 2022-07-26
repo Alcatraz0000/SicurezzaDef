@@ -21,6 +21,11 @@ import org.bouncycastle.jce.ECNamedCurveTable;
 import org.bouncycastle.jce.spec.ECParameterSpec;
 import org.bouncycastle.jce.spec.ECPublicKeySpec;
 
+/**
+ *
+ * @author Kryptos
+ */
+
 public class Validatore {
     public static String s = "Server";
 

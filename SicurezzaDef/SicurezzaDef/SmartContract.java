@@ -11,6 +11,11 @@ import java.security.PublicKey;
 
 import java.security.NoSuchProviderException;
 
+/**
+ *
+ * @author Kryptos
+ */
+
 public class SmartContract {
     /*
      * La classe SmartContract, come suggerisce il nome, contiene le funzioni
@@ -189,10 +194,9 @@ public class SmartContract {
         int i = 0;
         String voto = "00";
         while (i < 2) {
-            ByteArrayOutputStream outputStreamContract = new ByteArrayOutputStream();
-            outputStreamContract.write(randomness);
-            outputStreamContract.write(voto.getBytes());
-            byte[] randVoto = outputStreamContract.toByteArray();
+
+            byte[] randVoto = Utils.concatBytes(randomness, voto.getBytes());
+
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             digest.update(randVoto);
             byte[] hashOfRandVoto = digest.digest();
