@@ -3,12 +3,19 @@ import java.io.*;
 import java.util.*;
 import java.io.ByteArrayOutputStream;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.ShortBufferException;
+
+import java.security.InvalidKeyException;
 import java.security.KeyStore;
 import java.security.cert.X509Certificate;
 import java.security.PublicKey;
-
+import java.security.SignatureException;
 import java.security.NoSuchProviderException;
 
 /**
@@ -51,8 +58,6 @@ public class SmartContract {
         int no = 0;
         int nullo = 0;
         obtainRandomness();
-        System.out.println("randomaness fatta");
-        System.out.println(votersRandomness);
         String[] voti = obtainMessages();
         System.out.println("messages fatti");
         for (i = 0; i < voti.length; i++) {
@@ -78,7 +83,7 @@ public class SmartContract {
     }
 
     /**
-     * * Questo metodo ottiene il messaggio m = (R,E) associato ad una specifica
+     * Questo metodo ottiene il messaggio m = (R,E) associato ad una specifica
      * chiave pubblica e ad una specifica randomness
      * 
      * @return il messaggio m = (R,E)
@@ -90,9 +95,7 @@ public class SmartContract {
             ObjectInputStream ois = new ObjectInputStream(new FileInputStream("ItalyChain.txt"));
             byte[] read = (byte[]) ois.readObject();
             while (read != null && Arrays.equals(read, "T2-T3".getBytes()) == false) {
-                System.out.println("Avanti il prossimo");
                 byte[] publicKey = read;
-                System.out.println("publicKey: " + publicKey);
                 if (votersRandomness.containsKey(Utils.toHex(publicKey))) {
                     byte[] mSigned = (byte[]) ois.readObject();
                     byte[] m = Arrays.copyOfRange(mSigned, 0, 234);
@@ -125,11 +128,9 @@ public class SmartContract {
             ObjectInputStream ois = new ObjectInputStream(new FileInputStream("ItalyChain.txt"));
 
             byte[] read = (byte[]) ois.readObject();
-            System.out.println("T2-T3: " + Utils.toHex("T2-T3".getBytes()));
             while (!Arrays.equals(read, "T2-T3".getBytes())) {
                 read = (byte[]) ois.readObject();
             }
-            System.out.println("T2-T3: " + Utils.toHex(read));
             int i = 0;
             byte[] publicKey = (byte[]) ois.readObject();
             while (publicKey != null) {
@@ -138,7 +139,7 @@ public class SmartContract {
                 byte[] randomnessSigned = (byte[]) ois.readObject();
                 byte[] randomness = Arrays.copyOfRange(randomnessSigned, 0, 32);
                 votersRandomness.put(Utils.toHex(publicKey), randomness);
-                System.out.println("SmartContract: pk: " + publicKey + "randomness: " + Utils.toHex(randomness));
+                System.out.println("SmartContract: pk: " + publicKey + " randomness: " + Utils.toHex(randomness));
                 publicKey = (byte[]) ois.readObject();
             }
         } catch (Exception e) {
@@ -155,8 +156,16 @@ public class SmartContract {
      *          Società
      * @return C se la decifertura va a buon fine
      * @throws NoSuchProviderException
+     * @throws BadPaddingException
+     * @throws IllegalBlockSizeException
+     * @throws ShortBufferException
+     * @throws NoSuchPaddingException
+     * @throws SignatureException
+     * @throws InvalidKeyException
      */
-    public static byte[] obtainC(byte[] E) throws NoSuchProviderException {
+    public static byte[] obtainC(byte[] E)
+            throws NoSuchProviderException, NoSuchAlgorithmException, InvalidKeyException, SignatureException,
+            NoSuchPaddingException, ShortBufferException, IllegalBlockSizeException, BadPaddingException {
         byte[] C = Cryptare.decrypt(E, privateKeySocieta);
         return C;
     }

@@ -39,20 +39,13 @@ public class Societa {
         PrivateKey SocietaPrivateKey = null;
         PublicKey SocietaPublicKey = null;
         try {
-            /* PK e PrK da client */
-            File file = new File("Societykeystore.jks");
-            FileInputStream is = new FileInputStream(file);
-            KeyStore keystore = KeyStore.getInstance(KeyStore.getDefaultType());
-            // Information for certificate to be generated
+            String nomeFile = "Societykeystore.jks"; //args[0] contiene l'ID del votante
             String password = "mario99";
             String alias = "sslSociety";
             // getting the key
-            keystore.load(is, password.toCharArray());
-            SocietaPrivateKey = (PrivateKey) keystore.getKey(alias, password.toCharArray());
-            // Get certificate of public key
-            X509Certificate cert = (X509Certificate) keystore.getCertificate(alias);
-            SocietaPublicKey = cert.getPublicKey();
-
+            SocietaPublicKey = Utils.obtainPublicFromKeystore(nomeFile, password, alias);
+            SocietaPrivateKey = Utils.obtainPrivateFromKeystore(nomeFile, password, alias);
+          
             // Here it prints the public key
             System.out.println("Public Key Society: ");
             System.out.println(SocietaPublicKey);
