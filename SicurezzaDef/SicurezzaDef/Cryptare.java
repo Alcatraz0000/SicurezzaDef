@@ -121,6 +121,7 @@ public class Cryptare {
      */
     public static byte[] decrypt(byte cipherText[], PrivateKey privateKey) throws NoSuchProviderException {
         byte[] plainText = null;
+        
         try {
             Security.addProvider(new BouncyCastleProvider());
             Cipher iesCipher2 = Cipher.getInstance("ECIES", "BC");
