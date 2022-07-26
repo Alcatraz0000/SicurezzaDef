@@ -59,9 +59,9 @@ public class SmartContract {
         int nullo = 0;
         obtainRandomness();
         String[] voti = obtainMessages();
-        System.out.println("messages fatti");
+        System.out.println("Risultati: ");
         for (i = 0; i < voti.length; i++) {
-            System.out.println(voti[i]);
+            System.out.println("Voto: " + voti[i]);
             if (voti[i] == "00") {
                 no += 1;
             } else if (voti[i] == "11") {
