@@ -83,7 +83,7 @@ public class SmartContract {
     }
 
     /**
-     * * Questo metodo ottiene il messaggio m = (R,E) associato ad una specifica
+     * Questo metodo ottiene il messaggio m = (R,E) associato ad una specifica
      * chiave pubblica e ad una specifica randomness
      * 
      * @return il messaggio m = (R,E)
@@ -95,9 +95,7 @@ public class SmartContract {
             ObjectInputStream ois = new ObjectInputStream(new FileInputStream("ItalyChain.txt"));
             byte[] read = (byte[]) ois.readObject();
             while (read != null && Arrays.equals(read, "T2-T3".getBytes()) == false) {
-                System.out.println("Avanti il prossimo");
                 byte[] publicKey = read;
-                System.out.println("publicKey: " + publicKey);
                 if (votersRandomness.containsKey(Utils.toHex(publicKey))) {
                     byte[] mSigned = (byte[]) ois.readObject();
                     byte[] m = Arrays.copyOfRange(mSigned, 0, 234);
@@ -130,11 +128,9 @@ public class SmartContract {
             ObjectInputStream ois = new ObjectInputStream(new FileInputStream("ItalyChain.txt"));
 
             byte[] read = (byte[]) ois.readObject();
-            System.out.println("T2-T3: " + Utils.toHex("T2-T3".getBytes()));
             while (!Arrays.equals(read, "T2-T3".getBytes())) {
                 read = (byte[]) ois.readObject();
             }
-            System.out.println("T2-T3: " + Utils.toHex(read));
             int i = 0;
             byte[] publicKey = (byte[]) ois.readObject();
             while (publicKey != null) {
@@ -143,7 +139,7 @@ public class SmartContract {
                 byte[] randomnessSigned = (byte[]) ois.readObject();
                 byte[] randomness = Arrays.copyOfRange(randomnessSigned, 0, 32);
                 votersRandomness.put(Utils.toHex(publicKey), randomness);
-                System.out.println("SmartContract: pk: " + publicKey + "randomness: " + Utils.toHex(randomness));
+                System.out.println("SmartContract: pk: " + publicKey + " randomness: " + Utils.toHex(randomness));
                 publicKey = (byte[]) ois.readObject();
             }
         } catch (Exception e) {
