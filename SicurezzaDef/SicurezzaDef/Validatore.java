@@ -3,6 +3,7 @@ import java.net.Socket;
 
 import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLServerSocketFactory;
+import javax.net.ssl.SSLSocket;
 import java.util.concurrent.TimeUnit;
 
 import java.security.PublicKey;
