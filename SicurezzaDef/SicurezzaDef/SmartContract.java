@@ -3,12 +3,19 @@ import java.io.*;
 import java.util.*;
 import java.io.ByteArrayOutputStream;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.ShortBufferException;
+
+import java.security.InvalidKeyException;
 import java.security.KeyStore;
 import java.security.cert.X509Certificate;
 import java.security.PublicKey;
-
+import java.security.SignatureException;
 import java.security.NoSuchProviderException;
 
 /**
@@ -51,8 +58,6 @@ public class SmartContract {
         int no = 0;
         int nullo = 0;
         obtainRandomness();
-        System.out.println("randomaness fatta");
-        System.out.println(votersRandomness);
         String[] voti = obtainMessages();
         System.out.println("messages fatti");
         for (i = 0; i < voti.length; i++) {
@@ -155,8 +160,16 @@ public class SmartContract {
      *          Società
      * @return C se la decifertura va a buon fine
      * @throws NoSuchProviderException
+     * @throws BadPaddingException
+     * @throws IllegalBlockSizeException
+     * @throws ShortBufferException
+     * @throws NoSuchPaddingException
+     * @throws SignatureException
+     * @throws InvalidKeyException
      */
-    public static byte[] obtainC(byte[] E) throws NoSuchProviderException {
+    public static byte[] obtainC(byte[] E)
+            throws NoSuchProviderException, NoSuchAlgorithmException, InvalidKeyException, SignatureException,
+            NoSuchPaddingException, ShortBufferException, IllegalBlockSizeException, BadPaddingException {
         byte[] C = Cryptare.decrypt(E, privateKeySocieta);
         return C;
     }

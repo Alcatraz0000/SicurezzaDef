@@ -74,6 +74,7 @@ public class Cryptare {
 
         Security.addProvider(new BouncyCastleProvider());
         Signature sig = Signature.getInstance("ECDSA", "BC");
+        // verify signature using the public key
         sig.initVerify(publicKey);
         sig.update(message);
 
@@ -96,18 +97,24 @@ public class Cryptare {
      * @throws SignatureException
      * @throws NoSuchProviderException
      */
-    public static byte[] encrypt(byte[] message, PublicKey publicKey)
-            throws NoSuchAlgorithmException, InvalidKeyException, SignatureException, NoSuchProviderException {
+    public static byte[] encrypt(byte[] message, PublicKey publicKey) throws NoSuchProviderException {
 
-        Security.addProvider(new BouncyCastleProvider());
-        Cipher iesCipher = Cipher.getInstance("ECIES", "BC");
+        byte cipherText[] = null;
 
-        iesCipher.init(Cipher.ENCRYPT_MODE, publicKey);
+        try {
+            Security.addProvider(new BouncyCastleProvider());
+            Cipher iesCipher = Cipher.getInstance("ECIES", "BC");
 
-        byte[] cipherText = new byte[iesCipher.getOutputSize(message.length)];
+            iesCipher.init(Cipher.ENCRYPT_MODE, publicKey);
 
-        int ctlength = iesCipher.update(message, 0, message.length, cipherText, 0);
-        ctlength += iesCipher.doFinal(cipherText, ctlength);
+            cipherText = new byte[iesCipher.getOutputSize(message.length)];
+
+            int ctlength = iesCipher.update(message, 0, message.length, cipherText, 0);
+            ctlength += iesCipher.doFinal(cipherText, ctlength);
+            System.out.println(ctlength);
+        } catch (Exception ex) {
+            Logger.getLogger(Cryptare.class.getName()).log(Level.SEVERE, null, ex);
+        }
         return cipherText;
 
     }
@@ -125,18 +132,24 @@ public class Cryptare {
      * @throws SignatureException
      * @throws NoSuchProviderException
      */
-    public static byte[] decrypt(byte cipherText[], PrivateKey privateKey)
-            throws NoSuchAlgorithmException, InvalidKeyException, SignatureException, NoSuchProviderException {
+    public static byte[] decrypt(byte cipherText[], PrivateKey privateKey) throws NoSuchProviderException {
 
-        Security.addProvider(new BouncyCastleProvider());
-        Cipher iesCipher2 = Cipher.getInstance("ECIES", "BC");
+        byte[] plainText = null;
 
-        iesCipher2.init(Cipher.DECRYPT_MODE, privateKey);
+        try {
+            Security.addProvider(new BouncyCastleProvider());
+            Cipher iesCipher2 = Cipher.getInstance("ECIES", "BC");
 
-        byte[] plainText = new byte[iesCipher2.getOutputSize(cipherText.length)];
-        int ctlength2 = iesCipher2.update(cipherText, 0, cipherText.length, plainText, 0);
+            iesCipher2.init(Cipher.DECRYPT_MODE, privateKey);
 
-        ctlength2 += iesCipher2.doFinal(plainText, ctlength2);
+            plainText = new byte[iesCipher2.getOutputSize(cipherText.length)];
+            System.out.println(cipherText.length);
+            int ctlength2 = iesCipher2.update(cipherText, 0, cipherText.length, plainText, 0);
+
+            ctlength2 += iesCipher2.doFinal(plainText, ctlength2);
+        } catch (Exception ex) {
+            Logger.getLogger(Cryptare.class.getName()).log(Level.SEVERE, null, ex);
+        }
 
         return Arrays.copyOfRange(plainText, 0, plainText.length - 1);
     }
