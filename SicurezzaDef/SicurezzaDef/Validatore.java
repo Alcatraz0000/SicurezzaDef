@@ -19,23 +19,26 @@ import org.bouncycastle.jce.ECNamedCurveTable;
 import org.bouncycastle.jce.spec.ECParameterSpec;
 import org.bouncycastle.jce.spec.ECPublicKeySpec;
 
-public class SSLServer {
+public class Validatore {
     public static String s = "Server";
 
-    // LASCXIATA SUL VALIDATORE
+    /*
+     * ProtocolWriteOnChain è una funzione che permette di scrivere sulla ItalyChain (identificata come un file di testo)
+     * si distinguono due caso:
+     *  il caso in cui il file non è mai stato creato, prima viene creato (con l'header) e dopo si scrive la transazione.
+     *  il caso in cui il file esiste già, viene aperto in modalità append sfruttando una classe da noi creata (evita di scrivere l'header) e scrive la transazione.
+     *  
+     */
     static Boolean ProtocolWriteOnChain(byte[] transaction, PublicKey VoterPK) throws Exception {
         File file1 = new File("ItalyChain.txt");
 
-        // Checks if file1 exists
+        // Checks if File exists
         if (file1.exists() && !file1.isDirectory()) {
-            // System.out.println(file1 + " Exists");
             try {
                 AppendingObjectOutputStream outputStreamExist = new AppendingObjectOutputStream(
                         new FileOutputStream("ItalyChain.txt", true));
                 outputStreamExist.writeObject(VoterPK.getEncoded());
                 outputStreamExist.writeObject(transaction);
-                // System.out.println("PK: " + Utils.toHex(VoterPK.getEncoded()) + "transaction
-                // written to file" + " " + Utils.toHex(transaction));
             } catch (Exception e) {
                 e.printStackTrace();
             }

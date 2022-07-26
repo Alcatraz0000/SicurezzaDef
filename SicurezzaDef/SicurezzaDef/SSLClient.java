@@ -112,18 +112,18 @@ public class SSLClient {
         }
         //controllo che le chiavi ottenute abbiano validi valori associati
         if (ClientPrivatekey != null && ClientPublickey != null && SocietyPublicKey != null) {
-            byte[] m = Votante.vote(ClientPrivatekey, SocietyPublicKey, voto, ClientPublickey);
+            byte[] m = toVote.vote(ClientPrivatekey, SocietyPublicKey, voto, ClientPublickey);
             //m conterrà ciò che il votante invierà, ovvero il voto cifrato secondo il processo previsto e firmato
             Protocol(cSock, m); //il valore di m verrà inviato al validatore
             TimeUnit.MILLISECONDS.sleep(25000); //simula la fine della fase T1-T2 quindi la fase deputata al voto
             //Ora ha inizio la fase T2-T3 quindi la fase deputata all'invio delle randomness da parte dei votanti
-            byte[] r = Votante.confirmVote(ClientPrivatekey, ClientPublickey); //r conterrà il valore della randomness
+            byte[] r = toVote.confirmVote(ClientPrivatekey, ClientPublickey); //r conterrà il valore della randomness
             //utilizzata nella cifratura del voto
             //si procede all'inizializzazione di una nuova socket in modo da poter effettuare il secondo invio da parte del votante
             SSLSocket cSock2 = (SSLSocket) sockfact.createSocket("localhost", 4000); // specifica host e porta
             cSock2.startHandshake(); //handshake
             //la randomness ottenuta viene firmata
-            byte[] signature = Cryptare.signature(ClientPublickey, ClientPrivatekey, r); 
+            byte[] signature = Cryptare.signature(ClientPrivatekey, r); 
             ByteArrayOutputStream outputStream2 = new ByteArrayOutputStream();
             outputStream2.write(r);
             outputStream2.write(signature);

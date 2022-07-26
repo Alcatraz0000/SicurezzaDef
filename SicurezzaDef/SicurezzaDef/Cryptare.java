@@ -32,7 +32,7 @@ import java.util.Arrays;
 public class Cryptare {
     
     //byte[] address,
-    public static byte[] signature(PublicKey publicKey,  PrivateKey privateKey, byte[] message) throws NoSuchAlgorithmException, InvalidKeyException, SignatureException, NoSuchProviderException{ 
+    public static byte[] signature(PrivateKey privateKey, byte[] message) throws NoSuchAlgorithmException, InvalidKeyException, SignatureException, NoSuchProviderException{ 
         
         // sign using the private key
         Security.addProvider(new BouncyCastleProvider());
