@@ -22,6 +22,8 @@ public class eVote {
      */
     public static void main(String[] args) throws Exception{
         
+        //questa classe stiamo per eliminarla
+        //stiamo davvero per eliminarla
         // TODO code application logic here
         Security.addProvider(new BouncyCastleProvider());
         System.out.println(Security.getProvider("BC"));
