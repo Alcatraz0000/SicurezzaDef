@@ -12,6 +12,8 @@ import java.security.cert.X509Certificate;
 import java.security.PrivateKey;
 import java.security.KeyStore;
 
+import java.security.spec.PKCS8EncodedKeySpec;
+
 import org.bouncycastle.util.encoders.Hex;
 import org.bouncycastle.jce.ECNamedCurveTable;
 import org.bouncycastle.jce.spec.ECParameterSpec;
@@ -187,12 +189,74 @@ public class SSLServer {
         return outputStream.toByteArray();
     }
 
+    static PrivateKey SocietyFinalComunication(Socket sSock, PublicKey SocietyPK) throws Exception {// note that the
+                                                                                                    // SSLSocket object
+                                                                                                    // is converted in a
+                                                                                                    // standard Socket
+                                                                                                    // object and
+                                                                                                    // henceforth we can
+                                                                                                    // work as for
+                                                                                                    // standard Java
+                                                                                                    // sockets
+
+        System.out.println("session started 3 part.");
+        InputStream in = sSock.getInputStream();
+
+        byte[] message = new byte[67];
+        int tmp = 0;
+        int i = 0;
+        TimeUnit.MILLISECONDS.sleep(1000);
+        for (i = 0; i < 67; i++) {
+            tmp = in.read();
+            System.out.println(tmp);
+            message[i] = (byte) tmp;
+            // TimeUnit.MILLISECONDS.sleep(50);
+            // out.write(ch);
+        }
+
+        int signatureLength = in.available();
+        byte[] signature = new byte[signatureLength];
+        for (i = 0; i < signatureLength; i++) {
+            tmp = in.read();
+            System.out.println(tmp);
+            signature[i] = (byte) tmp;
+            TimeUnit.MILLISECONDS.sleep(50);
+            // out.write(ch);
+        }
+        TimeUnit.MILLISECONDS.sleep(50);
+        // System.out.println("\nMessaggio ricevuto: " + new
+        // String(Hex.encode(message)));
+        // System.out.println("\nfirma ricevuta: " + new String(Hex.encode(signature)));
+        Boolean verify = Cryptare.verifySignature(SocietyPK, signature, message);
+        if (verify != true) {
+            System.out.println("\nMessaggio non firmato correttamente: ");
+            return null;
+        }
+
+        KeyFactory kf = KeyFactory.getInstance("EC", "BC"); // or "EC" or whatever
+        PrivateKey privateKey = kf.generatePrivate(new PKCS8EncodedKeySpec(message));
+        System.out.println("\nPrivate Key calcolata arrivata: " + privateKey);
+        return privateKey;
+    }
+
     static PublicKey obtainVoterPK(KeyStore truststore, int IDClient) throws Exception {// note that the SSLSocket
                                                                                         // object is converted in a
                                                                                         // standard Socket object and
                                                                                         // henceforth we can work as for
                                                                                         // standard Java sockets
         String alias = "sslClient" + String.valueOf(IDClient);
+        // Get certificate of public key
+        X509Certificate cert = (X509Certificate) truststore.getCertificate(alias);
+        // Here it prints the public key
+        // System.out.println("Public Key Client" + String.valueOf(IDClient) + ":");
+        // System.out.println(Utils.toHex(cert.getPublicKey().getEncoded()));
+        return cert.getPublicKey();
+    }
+
+    static PublicKey obtainSocPK(KeyStore truststore) throws Exception {// note that the SSLSocket object is converted
+                                                                        // in a standard Socket object and henceforth we
+                                                                        // can work as for standard Java sockets
+        String alias = "sslSociety";
         // Get certificate of public key
         X509Certificate cert = (X509Certificate) truststore.getCertificate(alias);
         // Here it prints the public key
@@ -231,7 +295,7 @@ public class SSLServer {
         SSLServerSocketFactory sockfact = (SSLServerSocketFactory) SSLServerSocketFactory.getDefault(); //
         // create a factory object to handle server connections initialized with the
         // keystore passed as argument in the commandline (see Slides)
-        SSLSocket[] sslSock = new SSLSocket[4];
+        SSLSocket[] sslSock = new SSLSocket[5];
         PublicKey[] clientPK = new PublicKey[4];
 
         SSLServerSocket sSock = (SSLServerSocket) sockfact.createServerSocket(4000); // bind to port 4000
@@ -295,7 +359,9 @@ public class SSLServer {
         // // bind to port 4000
         // this lines are just to split the two phasis in the Italy Chain for comodity
         for (int i = 0; i < 4; i++) {
+            System.out.println("attendoConnessioni 2 volta");
             sslSock[i] = (SSLSocket) sSock.accept(); // accept connections
+            System.out.println("okey" + i);
             byte[] secondTransaction = ClientComunicationRandomness(sslSock[i], clientPK[i]);
             Boolean correctnessSecond = false;
             if (SmartContract.checkNFT(truststore, i + 1, clientPK[i]))
@@ -317,8 +383,16 @@ public class SSLServer {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        System.out.println("ho scrittto nullo, inizio t3-t4");
 
-        sSock.close();
+        System.out.println("ho scrittto nullo, inizio t3-t4");
+        PublicKey SocietyPK = obtainSocPK(truststore);
+        System.out.println("attendo connection Societa\n");
+        sslSock[4] = (SSLSocket) sSock.accept();
+        PrivateKey SocPrivateKey = SocietyFinalComunication(sslSock[4], SocietyPK);
+
+        System.out.println("sto per inviare");
+        System.out.println("0");
+        ConfirmTransaction(sslSock[4], "0");
+        SmartContract.computeFinalResult(SocPrivateKey, 4);
     }
 }
