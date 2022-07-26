@@ -89,7 +89,7 @@ public class Votante {
         // ottenere chiave pubblica e privata associata al client a partire dal proprio
         // keystore
         try {
-            String nomeFile = "Client" + args[0] + "keystore.jks"; //args[0] contiene l'ID del votante
+            String nomeFile = "Client" + args[0] + "keystore.jks"; // args[0] contiene l'ID del votante
             String password = "mario99";
             String alias = "sslClient" + args[0];
             // ottenimento delle chiavi
@@ -100,7 +100,7 @@ public class Votante {
             System.out.println(e);
         }
 
-        //KeyStore truststore = null;
+        // KeyStore truststore = null;
         PublicKey SocietyPublicKey = null;
         // ottenere dal truststore del votante la chiave pubblica della società, utile
         // per le cifrature successive
@@ -118,8 +118,11 @@ public class Votante {
             byte[] m = toVote.vote(ClientPrivatekey, SocietyPublicKey, voto, ClientPublickey);
             // m conterrà ciò che il votante invierà, ovvero il voto cifrato secondo il
             // processo previsto e firmato
+            System.out.println("Invio voto");
             Protocol(cSock, m); // il valore di m verrà inviato al validatore
+            System.out.println("Attendo fase T2-T3 per confermare voto");
             TimeUnit.MILLISECONDS.sleep(25000); // simula la fine della fase T1-T2 quindi la fase deputata al voto
+            System.out.println("Inizio comunicazione per fase T2-T3");
             // Ora ha inizio la fase T2-T3 quindi la fase deputata all'invio delle
             // randomness da parte dei votanti
             byte[] r = toVote.confirmVote(ClientPrivatekey, ClientPublickey); // r conterrà il valore della randomness
@@ -131,6 +134,7 @@ public class Votante {
             // la randomness ottenuta viene firmata
             byte[] signature = Cryptare.signature(ClientPrivatekey, r);
             byte[] result = Utils.concatBytes(r, signature);
+            System.out.println("Invio conferma voto");
             Protocol(cSock2, result); // la randomness ottenuta e firmata viene inviata al validatore
             // simula la fine della finestra temporale T2-T3
             TimeUnit.MILLISECONDS.sleep(25000);

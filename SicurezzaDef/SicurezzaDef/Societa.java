@@ -39,24 +39,20 @@ public class Societa {
         PrivateKey SocietaPrivateKey = null;
         PublicKey SocietaPublicKey = null;
         try {
-            String nomeFile = "Societykeystore.jks"; //args[0] contiene l'ID del votante
+            String nomeFile = "Societykeystore.jks"; // args[0] contiene l'ID del votante
             String password = "mario99";
             String alias = "sslSociety";
             // getting the key
             SocietaPublicKey = Utils.obtainPublicFromKeystore(nomeFile, password, alias);
             SocietaPrivateKey = Utils.obtainPrivateFromKeystore(nomeFile, password, alias);
-          
-            // Here it prints the public key
-            System.out.println("Public Key Society: ");
-            System.out.println(SocietaPublicKey);
-            // Here it prints the private key
 
         } catch (Exception e) {
             System.out.println(e);
         }
-        System.out.println("Grandezza Private key: " + SocietaPrivateKey.getEncoded().length);
+
+        System.out.println("Attendo fase T3-T4 per inviare Private Key");
         TimeUnit.MILLISECONDS.sleep(60000);
-        // seeAll();
+        System.out.println("Attesa terminata, inizio comunicazione con Validatore");
         SSLSocketFactory sockfact = (SSLSocketFactory) SSLSocketFactory.getDefault(); // similar to the server except
         // use SSLSocketFactory instead of SSLSocketServerFactory
         SSLSocket SocSock = (SSLSocket) sockfact.createSocket("localhost", 4000); // specify host and port
@@ -67,7 +63,6 @@ public class Societa {
         InputStream in = SocSock.getInputStream();
         while (!String.valueOf(esito).equals("0")) {
 
-            System.out.println("\nPrivate Key calcolata mandata: " + SocietaPrivateKey);
             byte[] signature = Cryptare.signature(SocietaPrivateKey, SocietaPrivateKey.getEncoded());
 
             byte[] result = Utils.concatBytes(SocietaPrivateKey.getEncoded(), signature);
@@ -75,15 +70,15 @@ public class Societa {
             out.write(result);
 
             out.write(Utils.toByteArray("\n"));
-            System.out.println("\nFinito: " + SocietaPrivateKey);
+
             TimeUnit.MILLISECONDS.sleep(7000);
 
             out.flush();
 
             esito = (char) in.read();
-            System.out.println(esito);
+
         }
-        System.out.println("Arrivederci!!!");
+        System.out.println(" Private Key correttamente inviata dalla Societa \nArrivederci!!!");
 
     }
 }

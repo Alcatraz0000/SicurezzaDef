@@ -54,13 +54,11 @@ public class Validatore {
             }
 
         } else {
-            // System.out.println(file1 + " Does not exists");
+
             try {
                 ObjectOutputStream outputStreamNew = new ObjectOutputStream(new FileOutputStream("ItalyChain.txt"));
                 outputStreamNew.writeObject(VoterPK.getEncoded());
                 outputStreamNew.writeObject(transaction);
-                // System.out.println("PK: " + Utils.toHex(VoterPK.getEncoded()) + "transaction
-                // written to file" + " " + Utils.toHex(transaction));
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -116,7 +114,7 @@ public class Validatore {
             return null;
         }
 
-        System.out.println("session closed.");
+        System.out.println("Session closed.");
         return Utils.concatBytes(message, signature);
     }
 
@@ -141,7 +139,7 @@ public class Validatore {
         KeyFactory kf = KeyFactory.getInstance("EC", "BC"); // or "EC" or whatever
         PrivateKey privateKey = kf
                 .generatePrivate(new PKCS8EncodedKeySpec(Arrays.copyOfRange(message, 0, messageDimension)));
-        System.out.println("\nPrivate Key calcolata arrivata: " + privateKey);
+
         return privateKey;
     }
 

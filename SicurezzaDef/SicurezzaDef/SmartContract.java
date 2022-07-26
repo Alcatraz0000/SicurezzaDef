@@ -99,7 +99,6 @@ public class SmartContract {
                 if (votersRandomness.containsKey(Utils.toHex(publicKey))) {
                     byte[] mSigned = (byte[]) ois.readObject();
                     byte[] m = Arrays.copyOfRange(mSigned, 0, 234);
-                    System.out.println("SmartContract: pk: " + Utils.toHex(publicKey) + "m: " + Utils.toHex(m));
                     byte[] E = obtainE(m);
                     byte[] C = obtainC(E);
                     voti[i] = obtainVote(C, votersRandomness.get(Utils.toHex(publicKey)));
@@ -139,7 +138,6 @@ public class SmartContract {
                 byte[] randomnessSigned = (byte[]) ois.readObject();
                 byte[] randomness = Arrays.copyOfRange(randomnessSigned, 0, 32);
                 votersRandomness.put(Utils.toHex(publicKey), randomness);
-                System.out.println("SmartContract: pk: " + publicKey + " randomness: " + Utils.toHex(randomness));
                 publicKey = (byte[]) ois.readObject();
             }
         } catch (Exception e) {
@@ -209,10 +207,7 @@ public class SmartContract {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             digest.update(randVoto);
             byte[] hashOfRandVoto = digest.digest();
-            System.out.println("come C: " + Utils.toHex(C));
-            System.out.println("come hashOfRandVoto: " + Utils.toHex(hashOfRandVoto));
             if (Arrays.equals(hashOfRandVoto, C)) {
-                System.out.println("sono entrato era: " + voto);
                 return voto;
             } else {
                 voto = "11";
