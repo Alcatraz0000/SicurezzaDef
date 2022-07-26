@@ -15,153 +15,125 @@ import java.security.KeyStore;
 
 import java.util.Arrays;
 
+
+/* Questa classe rappresenta il singolo votante, e contiene al proprio interno tutte le funzioni necessarie 
+ * a quest'ultimo per l'esecuzione delle sue funzionalità connesse all'espressione della preferenza, alla conferma
+ * della randomness utilizzata.
+ * Per la simulazione del sistema implementato è stato previsto il coinvolgimento di più votanti, motivo per cui il 
+ * codice all'interno presenta delle parametrizzazioni, che fanno riferimento all'ID del votante in questione e 
+ * al voto espresso da quest'ultimo relativamente al referendum in questione.
+ */
+
 public class SSLClient {
-    public static String s = "Client\n";
 
-    static void Protocol(Socket cSock, byte[] firstSent) throws Exception {// note that the SSLSocket object is
-                                                                           // converted in a standard Socket object and
-                                                                           // henceforth we can work as for standard
-                                                                           // Java sockets
+    /**
+     * Tale funzione è deputata all'invio dei messaggi, sfruttando la socket instanziata, facendo sì
+     * che il votante possa comunicare con il validatore.
+     * All'invio del messaggio il votante deve attendere la conferma di corretta ricezione dal validatore, o altrimenti
+     * attendere sette secondi dopo di che ritentare l'invio del messaggio.
+     * @param cSock socket su cui inviare il messaggio
+     * @param firstSent messaggio da inviare
+     * @throws Exception
+     */
+    static void Protocol(Socket cSock, byte[] firstSent) throws Exception {
+        //note that the SSLSocket object is converted in a standard Socket object and 
+        //henceforth we can work as for standard Java sockets
         char esito = 'c';
-        OutputStream out = cSock.getOutputStream();
-        InputStream in = cSock.getInputStream();
+        OutputStream out = cSock.getOutputStream(); //output stream
+        InputStream in = cSock.getInputStream(); //input stream
+        
         while (!String.valueOf(esito).equals("0")) {
-            System.out.println("cami scusa");
-            // InputStream in = cSock.getInputStream();
-            // henceforth the client can send a byte array X to the server just writing with
-            // out.write(X)
-            // and can read a byte c from the server with c=in.read()
-            // in this specific protocol the Client first sends the string "Client" to the
-            // Server and receives the string "Server" from the Server and prints it
-            // The server sends back the string received to the Client, so the Server will
-            // send to the Client the string "Client" and the Client prints it
-            // so in the end the Client will print ServerClient
-            // The protocol is stupid and serves only to demonstrate how to read and write
-            // on secure sockets
-            System.out.println(firstSent.length);
-            out.write(firstSent);
+            out.write(firstSent); //il client manda il messaggio passato
             out.write(Utils.toByteArray("\n"));
-            TimeUnit.MILLISECONDS.sleep(7000);
-
+            TimeUnit.MILLISECONDS.sleep(7000); //attende per la conferma
             out.flush();
-
-            esito = (char) in.read();
-            System.out.println(esito);
+            esito = (char) in.read(); //legge l'eventuale esito da parte del validatore
         }
-        System.out.println("finito proseguo");
-        // int ch = 0;
-        // {
-        // !cSock.isClosed()
-        // while(true);
-        // System.out.print((char)ch);
-        // TimeUnit.SECONDS.sleep(1);
-        // }
-
-        // System.out.println((char)ch);
+        System.out.println("Comunicazione Client-Server completata correttamente");
     }
 
-    static void seeAll() throws Exception {// note that the SSLSocket object is converted in a standard Socket object
-                                           // and henceforth we can work as for standard Java sockets
-        ObjectInputStream ois = new ObjectInputStream(new FileInputStream("ItalyChain.txt"));
-        byte[] read = (byte[]) ois.readObject();
-        int i = 1;
-        while (read != null) {
-            if (!Arrays.equals(read, "T2-T3".getBytes())) {
-                System.out.println("oggetto " + i + ": " + Utils.toHex(read));
-            } else {
-                System.out.println("oggetto separatore" + i + ": " + new String(Utils.toHex(read)));
-            }
-            read = (byte[]) ois.readObject();
-            i++;
-        }
-    }
-
+    /**
+     * Tale funzione sancisce l'inizio dell'esecuzione di ciascuno dei votanti, prevede dei parametri passati a 
+     * di comando funzionali allo svolgimento delle attività di voto. 
+     * Inizialmente viene istaurata una connessione, mediante socket, attraverso la quale votante e validatore possano
+     * comunicare, l'inizializzazione di tale connessione è preceduta da una fase di handshake.
+     * @param args identificativo del votante e preferenza espressa
+     * @throws Exception
+     */
     public static void main(String[] args) throws Exception {
+        SSLSocketFactory sockfact = (SSLSocketFactory) SSLSocketFactory.getDefault(); // similare a quella del server
+        //eccetto per il fatto che usa SSLSocketFactory invece di SSLSocketServerFactory 
+        SSLSocket cSock = (SSLSocket) sockfact.createSocket("localhost", 4000); // specifica l'host e la porta
+        cSock.startHandshake(); //handshake
 
-        SSLSocketFactory sockfact = (SSLSocketFactory) SSLSocketFactory.getDefault(); // similar to the server except
-        // use SSLSocketFactory instead of SSLSocketServerFactory
-        SSLSocket cSock = (SSLSocket) sockfact.createSocket("localhost", 4000); // specify host and port
-        cSock.startHandshake();
-
-        String voto = args[1];
+        String voto = args[1]; //il secondo parametro passato a riga di comando corrisponde alla preferenza espressa dal votante
         PrivateKey ClientPrivatekey = null;
         PublicKey ClientPublickey = null;
+        //ottenere chiave pubblica e privata associata al client a partire dal proprio keystore
         try {
-            /* PK e PrK da client */
-            File file = new File("Client" + args[0] + "keystore.jks");
+            File file = new File("Client" + args[0] + "keystore.jks"); //args[0] contiene l'ID del votante
             FileInputStream is = new FileInputStream(file);
             KeyStore keystore = KeyStore.getInstance(KeyStore.getDefaultType());
-            // Information for certificate to be generated
+            // Informazioni per il certificato
             String password = "mario99";
             String alias = "sslClient" + args[0];
-            // getting the key
+            // ottenimento delle chiavi
             keystore.load(is, password.toCharArray());
-            ClientPrivatekey = (PrivateKey) keystore.getKey(alias, password.toCharArray());
-            // Get certificate of public key
+            ClientPrivatekey = (PrivateKey) keystore.getKey(alias, password.toCharArray()); //chiave privata
+            // Certificato della public key
             X509Certificate cert = (X509Certificate) keystore.getCertificate(alias);
-            ClientPublickey = cert.getPublicKey();
+            ClientPublickey = cert.getPublicKey(); //chiave pubblica
 
             // Here it prints the public key
-            System.out.println("Public Key Client" + args[0] + ": ");
-            System.out.println(ClientPublickey);
+            //System.out.println("Public Key Client" + args[0] + ": ");
+            //System.out.println(ClientPublickey);
             // Here it prints the private key
 
         } catch (Exception e) {
             System.out.println(e);
         }
 
-        // System.out.println(keyPair.getPrivate());
-
-        // we send the public key to server just to allow to server to verify the
-        // messages send by voters
-
-        /*
-         * System.out.println("questa e la lunghezza in byte delle chiavi: " +
-         * keyPair.getPublic().getEncoded().length);
-         * 
-         * Protocol(cSock, keyPair.getPublic().getEncoded());
-         */
         KeyStore truststore = null;
         PublicKey SocietyPublicKey = null;
+        //ottenere dal truststore del client la chiave pubblica della società, utile per le cifrature successive
         try {
-            /* CLIENT PART PK */
             File file = new File("truststoreClient" + args[0] + ".jks");
             FileInputStream is = new FileInputStream(file);
             truststore = KeyStore.getInstance(KeyStore.getDefaultType());
             String password = "mario99";
-            // getting the key
             truststore.load(is, password.toCharArray());
             String alias = "sslSociety";
-            // Get certificate of public key
+            // certificato della chiave pubblica
             X509Certificate cert = (X509Certificate) truststore.getCertificate(alias);
-            // Here it prints the public key
-            // System.out.println("Public Key Client" + String.valueOf(IDClient) + ":");
-            // System.out.println(Utils.toHex(cert.getPublicKey().getEncoded()));
-            SocietyPublicKey = cert.getPublicKey();
+            SocietyPublicKey = cert.getPublicKey(); //chiave pubblica della società
 
         } catch (Exception e) {
             System.out.println(e);
         }
-
+        //controllo che le chiavi ottenute abbiano validi valori associati
         if (ClientPrivatekey != null && ClientPublickey != null && SocietyPublicKey != null) {
             byte[] m = Votante.vote(ClientPrivatekey, SocietyPublicKey, voto, ClientPublickey);
-            Protocol(cSock, m);
-            // simulate the end of T1-T2
-            TimeUnit.MILLISECONDS.sleep(25000);
-            // now start T2-T3 phase
-            byte[] r = Votante.confirmVote(ClientPrivatekey, ClientPublickey);
-            SSLSocket cSock2 = (SSLSocket) sockfact.createSocket("localhost", 4000); // specify host and port
-            cSock2.startHandshake();
-            byte[] signature = Cryptare.signature(ClientPublickey, ClientPrivatekey, r);
+            //m conterrà ciò che il votante invierà, ovvero il voto cifrato secondo il processo previsto e firmato
+            Protocol(cSock, m); //il valore di m verrà inviato al validatore
+            TimeUnit.MILLISECONDS.sleep(25000); //simula la fine della fase T1-T2 quindi la fase deputata al voto
+            //Ora ha inizio la fase T2-T3 quindi la fase deputata all'invio delle randomness da parte dei votanti
+            byte[] r = Votante.confirmVote(ClientPrivatekey, ClientPublickey); //r conterrà il valore della randomness
+            //utilizzata nella cifratura del voto
+            //si procede all'inizializzazione di una nuova socket in modo da poter effettuare il secondo invio da parte del votante
+            SSLSocket cSock2 = (SSLSocket) sockfact.createSocket("localhost", 4000); // specifica host e porta
+            cSock2.startHandshake(); //handshake
+            //la randomness ottenuta viene firmata
+            byte[] signature = Cryptare.signature(ClientPublickey, ClientPrivatekey, r); 
             ByteArrayOutputStream outputStream2 = new ByteArrayOutputStream();
             outputStream2.write(r);
             outputStream2.write(signature);
             byte[] result = outputStream2.toByteArray();
-            Protocol(cSock2, result);
+            Protocol(cSock2, result); //la randomness ottenuta e firmata viene inviata al validatore 
+            //simula la fine della finestra temporale T2-T3
             TimeUnit.MILLISECONDS.sleep(25000);
-            // now start T3-T4 phase
+            //ora inizio la fase T3-T4 deputata alla computazione dell'esito finale del referendum
         } else {
-            System.out.println("Client" + args[0] + " le mie chiavi sono null!!!:");
+            System.out.println("Client" + args[0] + ": ci sono delle chiavi non ottenute correttamente");
         }
 
     }
