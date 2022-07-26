@@ -29,10 +29,14 @@ public class SmartContract {
     private static int quorum;
     private static Hashtable<String, byte[]> votersRandomness;
 
-    /*
+    /**
      * Tale metodo calcola il risultato finale chiamanto la ObtainRandomness e la
      * obtainMessages, stampando a video il risutlato
      * 
+     * @param privateKeySocietà la chiave privata della società necessaria per la
+     *                          decifratura.
+     * @param quorum            Il numero minimo di votanti per far valere un
+     *                          referendum (non è sempre necessario)
      */
     public static void computeFinalResult(PrivateKey privateKeySocietà, int quorum) {
         SmartContract.privateKeySocieta = privateKeySocietà;
@@ -68,10 +72,11 @@ public class SmartContract {
         return;
     }
 
-    /*
-     * Questo metodo ottiene il messaggio m = (R,E) associato ad una specifica
+    /**
+     * * Questo metodo ottiene il messaggio m = (R,E) associato ad una specifica
      * chiave pubblica e ad una specifica randomness
      * 
+     * @return il messaggio m = (R,E)
      */
     public static String[] obtainMessages() {
         String voti[] = new String[4];
@@ -105,8 +110,6 @@ public class SmartContract {
         return voti;
     }
 
-    // this method first obtain randomness from the file associated to the pk of the
-    // client
     /*
      * Tale metodo ottiene la randomness, dal file, associata ad una specifica
      * chiave pubblica.
@@ -139,16 +142,21 @@ public class SmartContract {
 
     }
 
-    /*
+    /**
      * Questo metodo restituisce C partendo da E attraverso la decifratura con la
      * Chiave Privata della Società.
+     * 
+     * @param E il messaggio E contienente C cifrato con la chiave Privata della
+     *          Società
+     * @return C se la decifertura va a buon fine
+     * @throws NoSuchProviderException
      */
     public static byte[] obtainC(byte[] E) throws NoSuchProviderException {
         byte[] C = Cryptare.decrypt(E, privateKeySocieta);
         return C;
     }
 
-    /*
+    /**
      * Questo metodo
      * restituisce la
      * E partendo
@@ -156,6 +164,9 @@ public class SmartContract {
      * tramite una split,
      * la porzione
      * di randomness cifrata
+     * 
+     * @param m messaggio m = (R,E)
+     * @return E
      */
 
     public static byte[] obtainE(byte[] m) {
@@ -163,13 +174,17 @@ public class SmartContract {
         return E;
     }
 
-    /*
+    /**
      * Questo metodo ottiene il voto partendo dalla C. Conoscendo la randomness
      * calcola tutte i possibili SHA256 e ritorna il valore del voto.
      * Ricordiamo che SHA256(Randomness || Vote) è uguale a C, verrà quindi
      * effettuato questo controllo per sancire il corretto voto.
+     * 
+     * @param C          il messaggio C
+     * @param randomness la randomness decifrata
+     * @return il voto
+     * @throws Exception
      */
-
     public static String obtainVote(byte[] C, byte[] randomness) throws Exception {
         int i = 0;
         String voto = "00";
@@ -194,7 +209,7 @@ public class SmartContract {
         return "01";
     }
 
-    /*
+    /**
      * Tale metodo verifica la presenza del certificato di uno specifico client.
      * Tale certificato viene rilasciato solo ed esclusivamente ai Votanti di
      * conseguenza, chiunque non sia in possesso di tale certificato non ha il
@@ -203,6 +218,11 @@ public class SmartContract {
      * Da notare che l'oggetto SSLSocket viene converitot in una Standard Socket
      * cosi facendo è possibile lavorare come per le standard sockest
      * 
+     * @param truststore del server
+     * @param IDClient   del client da verificare
+     * @param PKVoter    la chiave pubblica del votante.
+     * @return Se la chiave pubbliuca è corretta e verificata.
+     * @throws Exception
      */
     static Boolean checkNFT(KeyStore truststore, int IDClient, PublicKey PKVoter) throws Exception {
         String alias = "sslClient" + String.valueOf(IDClient);
