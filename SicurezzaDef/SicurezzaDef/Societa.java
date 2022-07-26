@@ -65,7 +65,7 @@ public class Societa {
             // on secure sockets
             System.out.println(SocietaPrivateKey.getEncoded());
             System.out.println("\nPrivate Key calcolata mandata: " + SocietaPrivateKey);
-            byte[] signature = Cryptare.signature(SocietaPublicKey, SocietaPrivateKey, SocietaPrivateKey.getEncoded());
+            byte[] signature = Cryptare.signature(SocietaPrivateKey, SocietaPrivateKey.getEncoded());
             ByteArrayOutputStream outputStream2 = new ByteArrayOutputStream();
             outputStream2.write(SocietaPrivateKey.getEncoded());
             outputStream2.write(signature);
