@@ -5,15 +5,13 @@ import java.net.Socket;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import java.util.concurrent.TimeUnit;
-import java.security.KeyPair;
 
 import java.security.PublicKey;
-import java.security.KeyFactory;
 import java.security.cert.X509Certificate;
 import java.security.PrivateKey;
 import java.security.KeyStore;
 
-import java.util.Arrays;
+
 
 
 /* Questa classe rappresenta il singolo votante, e contiene al proprio interno tutte le funzioni necessarie 
@@ -49,7 +47,7 @@ public class Votante {
             out.flush();
             esito = (char) in.read(); //legge l'eventuale esito da parte del validatore
         }
-        System.out.println("Comunicazione Client-Server completata correttamente");
+        System.out.println("Comunicazione Votante-Validatore completata correttamente");
     }
 
     /**
