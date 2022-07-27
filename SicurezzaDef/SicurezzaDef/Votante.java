@@ -137,10 +137,7 @@ public class Votante {
             byte[] result = Utils.concatBytes(r, signature);
             System.out.println("Invio conferma voto");
             Protocol(cSock2, result); // la randomness ottenuta e firmata viene inviata al validatore
-            // simula la fine della finestra temporale T2-T3
-            TimeUnit.MILLISECONDS.sleep(25000);
-            // ora inizio la fase T3-T4 deputata alla computazione dell'esito finale del
-            // referendum
+
         } else {
             System.out.println("Client" + args[0] + ": ci sono delle chiavi non ottenute correttamente");
         }
