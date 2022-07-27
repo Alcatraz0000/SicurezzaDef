@@ -149,15 +149,4 @@ public class Utils {
 
     }
 
-    static SSLContext createSSLContext(String store, String alias) throws Exception {
-
-        KeyManagerFactory keyFact = KeyManagerFactory.getInstance("SunX509");
-        KeyStore clientStore = KeyStore.getInstance("JKS");
-        clientStore.load(new FileInputStream(store), "mario99".toCharArray());
-        keyFact.init(clientStore, "mario99".toCharArray());
-        SSLContext sslContext = SSLContext.getInstance("TLS");
-        sslContext.init(new X509KeyManager[] { new MyKeyManager(store, "mario99".toCharArray(), alias) }, null, null);
-        return sslContext;
-    }
-
 }
