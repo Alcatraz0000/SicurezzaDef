@@ -76,7 +76,11 @@ public class Votante {
      * @throws Exception
      */
     public static void main(String[] args) throws Exception {
-        SSLSocketFactory sockfact = (SSLSocketFactory) SSLSocketFactory.getDefault(); // similare a quella del server
+        String nomeFile = "Client" + args[0] + "keystore.jks"; // args[0] contiene l'ID del votante
+        String password = "mario99";
+        String alias = "sslClient" + args[0];
+
+        SSLSocketFactory sockfact = Utils.obtainClientSocketFactory(nomeFile, alias); // similare a quella del server
         // eccetto per il fatto che usa SSLSocketFactory invece di
         // SSLSocketServerFactory
         SSLSocket cSock = (SSLSocket) sockfact.createSocket("localhost", 4000); // specifica l'host e la porta
@@ -89,9 +93,6 @@ public class Votante {
         // ottenere chiave pubblica e privata associata al client a partire dal proprio
         // keystore
         try {
-            String nomeFile = "Client" + args[0] + "keystore.jks"; // args[0] contiene l'ID del votante
-            String password = "mario99";
-            String alias = "sslClient" + args[0];
             // ottenimento delle chiavi
             ClientPublickey = Utils.obtainPublicFromKeystore(nomeFile, password, alias);
             ClientPrivatekey = Utils.obtainPrivateFromKeystore(nomeFile, password, alias);

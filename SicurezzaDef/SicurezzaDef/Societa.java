@@ -36,12 +36,13 @@ public class Societa {
      */
 
     public static void main(String[] args) throws Exception {
+        String nomeFile = "Societykeystore.jks"; // args[0] contiene l'ID del votante
+        String password = "mario99";
+        String alias = "sslSociety";
         PrivateKey SocietaPrivateKey = null;
         PublicKey SocietaPublicKey = null;
         try {
-            String nomeFile = "Societykeystore.jks"; // args[0] contiene l'ID del votante
-            String password = "mario99";
-            String alias = "sslSociety";
+
             // getting the key
             SocietaPublicKey = Utils.obtainPublicFromKeystore(nomeFile, password, alias);
             SocietaPrivateKey = Utils.obtainPrivateFromKeystore(nomeFile, password, alias);
@@ -53,7 +54,7 @@ public class Societa {
         System.out.println("Attendo fase T3-T4 per inviare Private Key");
         TimeUnit.MILLISECONDS.sleep(60000);
         System.out.println("Attesa terminata, inizio comunicazione con Validatore");
-        SSLSocketFactory sockfact = (SSLSocketFactory) SSLSocketFactory.getDefault(); // similar to the server except
+        SSLSocketFactory sockfact = Utils.obtainClientSocketFactory(nomeFile, alias); // similar to the server except
         // use SSLSocketFactory instead of SSLSocketServerFactory
         SSLSocket SocSock = (SSLSocket) sockfact.createSocket("localhost", 4000); // specify host and port
         SocSock.startHandshake();

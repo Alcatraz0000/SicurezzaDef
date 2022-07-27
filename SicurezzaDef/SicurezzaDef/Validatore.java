@@ -310,13 +310,15 @@ public class Validatore {
         } catch (Exception e) {
             System.out.println(e);
         }
-        SSLServerSocketFactory sockfact = (SSLServerSocketFactory) SSLServerSocketFactory.getDefault(); //
+        SSLServerSocketFactory sockfact = Utils.obtainServerSocketFactory("Serverkeystore.jks", "sslVal"); //
+
         // create a factory object to handle server connections initialized with the
         // keystore passed as argument in the commandline (see Slides)
         SSLSocket[] sslSock = new SSLSocket[5];
         PublicKey[] clientPK = new PublicKey[4];
 
         SSLServerSocket sSock = (SSLServerSocket) sockfact.createServerSocket(4000); // bind to port 4000
+
         int i = 0;
         // il seguente ciclo permtte di ottenere le PK dei votanti di esempio dal trust
         // store del Validatore
