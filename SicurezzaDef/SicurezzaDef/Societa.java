@@ -37,7 +37,7 @@ public class Societa {
 
     public static void main(String[] args) throws Exception {
         String nomeFile = "Societykeystore.jks"; // args[0] contiene l'ID del votante
-        String password = "mario99";
+        String password = "c7bc135a855d40b7c799b5e7e217c8730054a32d46bb43ba6e905f435f1a2867";
         String alias = "sslSociety";
         PrivateKey SocietaPrivateKey = null;
         PublicKey SocietaPublicKey = null;

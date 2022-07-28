@@ -303,7 +303,7 @@ public class Validatore {
             File file = new File("truststoreServer.jks");
             FileInputStream is = new FileInputStream(file);
             truststore = KeyStore.getInstance(KeyStore.getDefaultType());
-            String password = "mario99";
+            String password = "c7bc135a855d40b7c799b5e7e217c8730054a32d46bb43ba6e905f435f1a2867";
             // getting the key
             truststore.load(is, password.toCharArray());
 

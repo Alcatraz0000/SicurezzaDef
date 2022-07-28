@@ -77,7 +77,7 @@ public class Votante {
      */
     public static void main(String[] args) throws Exception {
         String nomeFile = "Client" + args[0] + "keystore.jks"; // args[0] contiene l'ID del votante
-        String password = "mario99";
+        String password = "c7bc135a855d40b7c799b5e7e217c8730054a32d46bb43ba6e905f435f1a2867";
         String alias = "sslClient" + args[0];
 
         SSLSocketFactory sockfact = Utils.obtainClientSocketFactory(nomeFile, alias); // similare a quella del server
@@ -107,7 +107,7 @@ public class Votante {
         // per le cifrature successive
         try {
             String nomeFile1 = "truststoreClient" + args[0] + ".jks";
-            String password1 = "mario99";
+            String password1 = "c7bc135a855d40b7c799b5e7e217c8730054a32d46bb43ba6e905f435f1a2867";
             String alias1 = "sslSociety";
             SocietyPublicKey = Utils.obtainValuesFromTruststore(nomeFile1, password1, alias1);
 

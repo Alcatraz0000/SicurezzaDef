@@ -132,7 +132,8 @@ public class Utils {
 
         SSLContext sslContext = SSLContext.getInstance("TLS");
         sslContext.init(
-                new X509KeyManager[] { new MyKeyManager(keyStoreFile, "mario99".toCharArray(), alias) },
+                new X509KeyManager[] { new MyKeyManager(keyStoreFile,
+                        "c7bc135a855d40b7c799b5e7e217c8730054a32d46bb43ba6e905f435f1a2867".toCharArray(), alias) },
                 null, new SecureRandom());
         return sslContext.getSocketFactory();
 
@@ -143,7 +144,8 @@ public class Utils {
 
         SSLContext sslContext = SSLContext.getInstance("TLS");
         sslContext.init(
-                new X509KeyManager[] { new MyKeyManager(keyStoreFile, "mario99".toCharArray(), alias) },
+                new X509KeyManager[] { new MyKeyManager(keyStoreFile,
+                        "c7bc135a855d40b7c799b5e7e217c8730054a32d46bb43ba6e905f435f1a2867".toCharArray(), alias) },
                 null, new SecureRandom());
         return sslContext.getServerSocketFactory();
 
