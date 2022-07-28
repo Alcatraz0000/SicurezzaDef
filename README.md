@@ -4,8 +4,12 @@ Tale progetto ha lo scopo di simulare la realizzazione di un sistema di e-vote b
 
 -- link del PDF, magari caricato su github direttamente
 
-I file riportati nella cartella "SicurezzaDef" comprono lo svolgimento del WP4. Nello specifico gli attori previsti sono: un Validatore, quattro Votanti e la Societa, ciascuno rappresentato da uno specifico programma. Questi diversi programmi comunicano tra di loro mediante l'impiego di Socket simulando in questo modo l'invio del voto correttamente cifrato e firmato e della annessa randomness, da parte dei votanti al validatore e l'invio della chiave privata della Societa al validatore. Come simulazione della BlockChain il validatore farà riferimento a metodi contenuto all'interno della classe SmartContract, simulando l'aggiunta di blocchi attraverso la scrittura su un file di testo "ItalyChain.txt" (da eliminare prima di ogni esecuzione).
-Le altre classi ovvero, Utils.java, Cryptare.java, SmartContract.java AppendingObjectOutputStream.java e toVote.java contengono metodi funzionali allo svolgimento della simulazione di votazione.
+I file riportati nella cartella "SicurezzaDef" comprono lo svolgimento del WP4. Nello specifico gli attori previsti sono: un Validatore, quattro Votanti e la Societa, ciascuno rappresentato da uno specifico programma. Questi diversi programmi comunicano tra di loro mediante l'impiego di Socket, simulando in questo modo l'invio del voto correttamente cifrato e firmato e della annessa randomness, da parte dei votanti al validatore e l'invio della chiave privata della Societa al validatore.
+L’intero progetto si inserisce in un contesto TLS.
+Come simulazione della BlockChain il validatore farà riferimento a metodi contenuti all'interno della classe SmartContract, simulando l'aggiunta di blocchi attraverso la scrittura su un file di testo "ItalyChain.txt" (da eliminare prima di ogni esecuzione).
+Le altre classi ovvero, Utils.java, Cryptare.java, SmartContract.java, MyKeyManager.java, AppendingObjectOutputStream.java e toVote.java contengono metodi funzionali allo svolgimento della simulazione di votazione.
+L’autorizzazione a votare per ciascun votante, descritta nel documento come possesso di un NFT, è stato simulato attraverso la verifica dello Smart Contract del possesso di un certificato pre-generato da parte di ciascun votante, utilizzando KeyStore e TrustStore.
+I due tool, Tor e SPID, di cui si è fatto utilizzo nella progettazione in WP2 e nell’analisi in WP3, non sono stati simulati all’interno di questo WP.
 
 ### How To Execute
 
